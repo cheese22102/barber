@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="fr" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Login - BarberShop</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: { bg: '#121212', surface: '#1E1E1E', text: '#FFFFFF', border: '#374151' },
+                        light: { bg: '#F9FAFB', surface: '#FFFFFF', text: '#111827', border: '#E5E7EB' }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text min-h-screen font-sans flex items-center justify-center px-4">
+    <div class="w-full max-w-md bg-light-surface dark:bg-dark-surface p-8 rounded-3xl shadow-xl border border-light-border dark:border-dark-border">
+        <div class="mb-8 text-center">
+            <h1 class="text-3xl font-bold mb-2">BarberShop Login</h1>
+            <p class="text-sm text-gray-500">Connexion administrateur ou personnel</p>
+        </div>
+
+        <!-- Role Selection -->
+        <div class="mb-6">
+            <div class="flex rounded-xl bg-light-bg dark:bg-dark-bg p-1">
+                <button id="staffBtn" class="flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all bg-black dark:bg-white text-white dark:text-black">Personnel</button>
+                <button id="adminBtn" class="flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all text-gray-500">Admin</button>
+            </div>
+        </div>
+
+        <form id="loginForm" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium mb-1">Email</label>
+                <input type="email" id="email" required class="w-full p-4 rounded-xl bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border outline-none focus:ring-2 focus:ring-black">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1">Mot de passe</label>
+                <input type="password" id="password" required class="w-full p-4 rounded-xl bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border outline-none focus:ring-2 focus:ring-black">
+            </div>
+            <button type="submit" class="w-full bg-black dark:bg-white text-white dark:text-black font-bold py-4 rounded-xl hover:opacity-90 transition-all">
+                Se connecter
+            </button>
+        </form>
+        
+        <div class="mt-6 text-center">
+            <a href="index.html" class="text-sm opacity-50 hover:opacity-100">Retour à l'accueil</a>
+        </div>
+    </div>
+
+    <script type="module">
+        const MOCK_MODE = false;
+
+        // Firebase Setup
+        const firebaseConfig = {
+            apiKey: "AIzaSyAVmBbX-5cS07XTq6RSImH6TpOLM_nI-R8",
+            authDomain: "barbershop-quick-book.firebaseapp.com",
+            projectId: "barbershop-quick-book",
+            storageBucket: "barbershop-quick-book.firebasestorage.app",
+            messagingSenderId: "863498811120",
+            appId: "1:863498811120:web:55f7fc647156bc91cdb435"
+        };
+
+        let auth = null;
+        let db = null;
+        let selectedRole = 'staff'; // Default to staff
+
+        // Role selection logic
+        const staffBtn = document.getElementById('staffBtn');
+        const adminBtn = document.getElementById('adminBtn');
+
+        staffBtn.addEventListener('click', () => {
+            selectedRole = 'staff';
+            staffBtn.classList.add('bg-black', 'dark:bg-white', 'text-white', 'dark:text-black');
+            staffBtn.classList.remove('text-gray-500');
+            adminBtn.classList.remove('bg-black', 'dark:bg-white', 'text-white', 'dark:text-black');
+            adminBtn.classList.add('text-gray-500');
+        });
+
+        adminBtn.addEventListener('click', () => {
+            selectedRole = 'admin';
+            adminBtn.classList.add('bg-black', 'dark:bg-white', 'text-white', 'dark:text-black');
+            adminBtn.classList.remove('text-gray-500');
+            staffBtn.classList.remove('bg-black', 'dark:bg-white', 'text-white', 'dark:text-black');
+            staffBtn.classList.add('text-gray-500');
+        });
+
+        if (!MOCK_MODE) {
+            // Import Firebase modules dynamically
+            import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js').then(({ initializeApp }) => {
+                import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js').then(({ getAuth, signInWithEmailAndPassword }) => {
+                    import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js').then(({ getFirestore, collection, query, where, getDocs }) => {
+                        const app = initializeApp(firebaseConfig);
+                        auth = getAuth(app);
+                        db = getFirestore(app);
+
+                        // Make Firebase functions globally available
+                        window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+                        window.collection = collection;
+                        window.query = query;
+                        window.where = where;
+                        window.getDocs = getDocs;
+
+                        console.log('Firebase Auth and Firestore initialized');
+                    });
+                });
+            });
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            if (MOCK_MODE) {
+                // In mock mode, any non-empty credentials work
+                localStorage.setItem('isLoggedIn', 'true');
+                if (selectedRole === 'admin') {
+                    localStorage.setItem('userRole', 'admin');
+                    window.location.href = 'admin.html';
+                } else {
+                    localStorage.setItem('userRole', 'staff');
+                    localStorage.setItem('barberId', '1');
+                    localStorage.setItem('staffName', 'Ahmed');
+                    window.location.href = 'staff.html';
+                }
+            } else {
+                try {
+                    if (!auth || !db) {
+                        throw new Error("Firebase not initialized");
+                    }
+
+                    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                    const user = userCredential.user;
+
+                    if (selectedRole === 'admin') {
+                        // Check if user is admin (you need to create an admin user in Firebase Auth)
+                        // For now, assume admin@barbershop.com is the admin
+                        if (email === 'admin@barbershop.com') {
+                            localStorage.setItem('isLoggedIn', 'true');
+                            localStorage.setItem('userRole', 'admin');
+                            localStorage.setItem('adminEmail', email);
+                            localStorage.setItem('adminPassword', password); // Store for re-authentication
+                            window.location.href = 'admin.html';
+                        } else {
+                            throw new Error("Accès administrateur refusé");
+                        }
+                    } else {
+                        // Staff login - get barber info from staff collection
+                        const staffQuery = query(collection(db, "staff"), where("email", "==", email));
+                        const staffSnapshot = await getDocs(staffQuery);
+
+                        if (staffSnapshot.empty) {
+                            throw new Error("Compte personnel introuvable");
+                        }
+
+                        const staffDoc = staffSnapshot.docs[0];
+                        const staffData = staffDoc.data();
+
+                        // Store authentication state
+                        localStorage.setItem('isLoggedIn', 'true');
+                        localStorage.setItem('userRole', 'staff');
+                        localStorage.setItem('barberId', staffData.barber_id.toString());
+                        localStorage.setItem('staffName', staffData.name);
+
+                        window.location.href = 'staff.html';
+                    }
+                } catch (error) {
+                    console.error("Login error:", error);
+                    alert("Erreur de connexion: " + error.message);
+                }
+            }
+        });
+
+        // Sync theme with main page
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+</body>
+</html>

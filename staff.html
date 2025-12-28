@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="fr" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Dashboard - BarberShop</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: { bg: '#121212', surface: '#1E1E1E', text: '#FFFFFF', border: '#374151' },
+                        light: { bg: '#F9FAFB', surface: '#FFFFFF', text: '#111827', border: '#E5E7EB' }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text min-h-screen font-sans">
+
+    <!-- Auth Guard -->
+    <script>
+        if (localStorage.getItem('isLoggedIn') !== 'true') {
+            window.location.href = 'login.html';
+        }
+    </script>
+
+    <header class="p-4 border-b border-light-border dark:border-dark-border flex justify-between items-center bg-light-surface dark:bg-dark-surface sticky top-0 z-10">
+        <div>
+            <h1 class="font-bold text-lg">Staff Panel</h1>
+            <p id="barberName" class="text-xs text-gray-500">Loading...</p>
+        </div>
+        <button id="logoutBtn" class="text-sm font-semibold text-red-500 px-3 py-1 rounded-lg border border-red-500/20">Logout</button>
+    </header>
+
+    <main class="p-4 space-y-6">
+        <!-- Monthly Insights -->
+        <section class="grid grid-cols-1 gap-4">
+            <div class="bg-light-surface dark:bg-dark-surface p-6 rounded-3xl border border-light-border dark:border-dark-border">
+                <p class="text-sm text-gray-500 mb-1">Monthly Reservations</p>
+                <h2 id="monthlyCount" class="text-4xl font-black">24</h2>
+            </div>
+        </section>
+
+        <!-- Upcoming Reservations -->
+        <section>
+            <h3 class="font-bold mb-4 flex items-center justify-between">
+                <span>Réservations à venir</span>
+                <span class="text-xs bg-accent-success text-white px-2 py-1 rounded">Upcoming</span>
+            </h3>
+            <div id="bookingList" class="space-y-3">
+                <!-- Bookings injected here -->
+            </div>
+        </section>
+    </main>
+
+    <script type="module">
+        const MOCK_MODE = false;
+        const barberId = localStorage.getItem('barberId');
+        const barbers = [
+            { id: 1, name: "Ahmed" },
+            { id: 2, name: "Mohamed" },
+            { id: 3, name: "Yassine" },
+            { id: 4, name: "Firas" }
+        ];
+
+        const mockBookings = [
+            { id: '1', client_name: "Sami Ben Ali", client_phone: "21622334455", time: "10:00", status: "confirmed" },
+            { id: '2', client_name: "Omar Trabelsi", client_phone: "21655667788", time: "11:00", status: "confirmed" },
+            { id: '3', client_name: "Yassine Mansour", client_phone: "21699001122", time: "15:00", status: "pending" },
+            { id: '4', client_name: "Karim Gharbi", client_phone: "21644332211", time: "17:00", status: "confirmed" },
+        ];
+
+        // Firebase Setup
+        const firebaseConfig = {
+            apiKey: "AIzaSyAVmBbX-5cS07XTq6RSImH6TpOLM_nI-R8",
+            authDomain: "barbershop-quick-book.firebaseapp.com",
+            projectId: "barbershop-quick-book",
+            storageBucket: "barbershop-quick-book.firebasestorage.app",
+            messagingSenderId: "863498811120",
+            appId: "1:863498811120:web:55f7fc647156bc91cdb435"
+        };
+
+        let db = null;
+
+        if (!MOCK_MODE) {
+            // Import Firebase modules dynamically
+            import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js').then(({ initializeApp }) => {
+                import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js').then(({ getFirestore, collection, query, where, getDocs, deleteDoc, doc, orderBy }) => {
+                    const app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+
+                    // Make Firebase functions globally available
+                    window.collection = collection;
+                    window.query = query;
+                    window.where = where;
+                    window.getDocs = getDocs;
+                    window.deleteDoc = deleteDoc;
+                    window.doc = doc;
+                    window.orderBy = orderBy;
+
+                    console.log('Firebase Firestore initialized');
+                    loadBookings(); // Load bookings once Firebase is ready
+                });
+            });
+        }
+
+        function init() {
+            const staffName = localStorage.getItem('staffName');
+            document.getElementById('barberName').textContent = `Barbier: ${staffName || 'Inconnu'}`;
+
+            if (MOCK_MODE) {
+                renderBookings(mockBookings);
+                updateMonthlyCount(mockBookings.length + 20);
+            } else {
+                // Try to load bookings immediately, will work once Firebase is ready
+                loadBookings();
+            }
+
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('staffRole');
+                localStorage.removeItem('barberId');
+                localStorage.removeItem('staffName');
+                window.location.href = 'index.html';
+            });
+        }
+
+        async function loadBookings() {
+            if (!db) {
+                console.log("DB not initialized yet");
+                return;
+            }
+
+            console.log("Loading bookings for barberId:", barberId, "type:", typeof barberId);
+
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                console.log("Querying for upcoming dates from:", today);
+
+                // First, let's check if there are any appointments at all
+                const allAppointmentsQuery = query(collection(db, "appointments"));
+                const allSnapshot = await getDocs(allAppointmentsQuery);
+                console.log("Total appointments in DB:", allSnapshot.size);
+                allSnapshot.docs.forEach(doc => {
+                    console.log("Appointment:", doc.id, doc.data());
+                });
+
+                // Get all upcoming appointments (today and future)
+                const q = query(
+                    collection(db, "appointments"),
+                    where("barber_id", "==", parseInt(barberId)),
+                    where("date", ">=", today),
+                    orderBy("date", "asc"),
+                    orderBy("time", "asc")
+                );
+
+                console.log("Executing query with barber_id:", parseInt(barberId));
+                const querySnapshot = await getDocs(q);
+                const bookings = querySnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+
+                console.log("Query result - found bookings:", bookings.length);
+                console.log("Bookings data:", bookings);
+                renderBookings(bookings);
+
+                // Also load total count (all appointments for this barber)
+                const totalQuery = query(
+                    collection(db, "appointments"),
+                    where("barber_id", "==", parseInt(barberId))
+                );
+                const totalSnapshot = await getDocs(totalQuery);
+                console.log("Total appointments for this barber:", totalSnapshot.size);
+                updateMonthlyCount(totalSnapshot.size);
+
+            } catch (error) {
+                console.error("Error loading bookings:", error);
+                console.error("Error details:", error.message);
+                renderBookings([]);
+                updateMonthlyCount(0);
+            }
+        }
+
+        function updateMonthlyCount(count) {
+            document.getElementById('monthlyCount').textContent = count;
+        }
+
+        function renderBookings(bookings) {
+            const list = document.getElementById('bookingList');
+            if (bookings.length === 0) {
+                list.innerHTML = `<div class="text-center py-10 opacity-50">Aucune réservation à venir</div>`;
+                return;
+            }
+
+            // Group bookings by date
+            const groupedBookings = {};
+            bookings.forEach(booking => {
+                if (!groupedBookings[booking.date]) {
+                    groupedBookings[booking.date] = [];
+                }
+                groupedBookings[booking.date].push(booking);
+            });
+
+            // Sort dates
+            const sortedDates = Object.keys(groupedBookings).sort();
+
+            list.innerHTML = sortedDates.map(date => {
+                const dateBookings = groupedBookings[date];
+                const dateObj = new Date(date);
+                const isToday = date === new Date().toISOString().split('T')[0];
+                const dateLabel = isToday ? 'Aujourd\'hui' : dateObj.toLocaleDateString('fr-FR', {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long'
+                });
+
+                return `
+                    <div class="mb-6">
+                        <h4 class="font-semibold text-lg mb-3 text-accent-success">${dateLabel}</h4>
+                        <div class="space-y-3">
+                            ${dateBookings.map(b => `
+                                <div class="bg-light-surface dark:bg-dark-surface p-4 rounded-2xl border border-light-border dark:border-dark-border flex items-center justify-between">
+                                    <div>
+                                        <p class="font-bold">${b.time}</p>
+                                        <p class="text-sm">${b.client_name}</p>
+                                        <a href="tel:${b.client_phone}" class="text-xs text-blue-500">${b.client_phone}</a>
+                                        <span class="inline-block ml-2 px-2 py-1 text-xs rounded-full ${b.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                            ${b.status === 'confirmed' ? 'Confirmé' : 'En attente'}
+                                        </span>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button onclick="cancelBooking('${b.id}')" class="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        window.cancelBooking = async (id) => {
+            if (confirm("Voulez-vous vraiment annuler ce rendez-vous ?")) {
+                if (MOCK_MODE) {
+                    const index = mockBookings.findIndex(b => b.id === id);
+                    if (index !== -1) {
+                        mockBookings.splice(index, 1);
+                        renderBookings(mockBookings);
+                        updateMonthlyCount(mockBookings.length + 20);
+                    }
+                } else {
+                    try {
+                        if (!db) {
+                            throw new Error("Firebase not initialized");
+                        }
+
+                        await deleteDoc(doc(db, "appointments", id));
+                        console.log("Booking cancelled:", id);
+
+                        // Reload bookings
+                        await loadBookings();
+
+                    } catch (error) {
+                        console.error("Error cancelling booking:", error);
+                        alert("Erreur lors de l'annulation: " + error.message);
+                    }
+                }
+            }
+        }
+
+        // Sync theme
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.classList.add('dark');
+        }
+
+        init();
+    </script>
+</body>
+</html>

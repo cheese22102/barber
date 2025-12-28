@@ -1,0 +1,30 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Staff collection - controlled access
+    match /staff/{document} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.token.email == 'admin@barbershop.com';
+      allow delete: if request.auth != null && request.auth.token.email == 'admin@barbershop.com';
+    }
+
+    // Barbers collection - controlled access
+    match /barbers/{document} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.token.email == 'admin@barbershop.com';
+      allow delete: if request.auth != null && request.auth.token.email == 'admin@barbershop.com';
+    }
+
+    // Appointments collection - controlled access
+    match /appointments/{document} {
+      // Allow anyone to create appointments (for booking)
+      allow create: if true;
+
+      // Allow anyone to read appointments for now (for debugging)
+      allow read: if true;
+
+      // Allow authenticated users to update/delete appointments (staff can manage their bookings)
+      allow update, delete: if request.auth != null;
+    }
+  }
+}

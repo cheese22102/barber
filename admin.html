@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="fr" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - BarberShop</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: { bg: '#121212', surface: '#1E1E1E', text: '#FFFFFF', border: '#374151' },
+                        light: { bg: '#F9FAFB', surface: '#FFFFFF', text: '#111827', border: '#E5E7EB' }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text min-h-screen font-sans">
+
+    <!-- Auth Guard -->
+    <script>
+        if (localStorage.getItem('isLoggedIn') !== 'true' || localStorage.getItem('userRole') !== 'admin') {
+            window.location.href = 'login.html';
+        }
+    </script>
+
+    <header class="p-4 border-b border-light-border dark:border-dark-border flex justify-between items-center bg-light-surface dark:bg-dark-surface sticky top-0 z-10">
+        <div>
+            <h1 class="font-bold text-lg">Admin Panel</h1>
+            <p class="text-xs text-gray-500">Gestion du personnel</p>
+        </div>
+        <button id="logoutBtn" class="text-sm font-semibold text-red-500 px-3 py-1 rounded-lg border border-red-500/20">Logout</button>
+    </header>
+
+    <main class="p-4 space-y-6">
+        <!-- Add Staff Member -->
+        <section class="bg-light-surface dark:bg-dark-surface p-6 rounded-3xl border border-light-border dark:border-dark-border">
+            <h3 class="font-bold mb-4">Ajouter un membre du personnel</h3>
+            <form id="addStaffForm" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Nom complet</label>
+                        <input type="text" id="staffName" required class="w-full p-3 rounded-xl bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border outline-none focus:ring-2 focus:ring-black">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Email</label>
+                        <input type="email" id="staffEmail" required class="w-full p-3 rounded-xl bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border outline-none focus:ring-2 focus:ring-black">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Mot de passe</label>
+                        <input type="password" id="staffPassword" required class="w-full p-3 rounded-xl bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border outline-none focus:ring-2 focus:ring-black">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">URL de l'image</label>
+                        <input type="url" id="staffImage" placeholder="https://..." class="w-full p-3 rounded-xl bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border outline-none focus:ring-2 focus:ring-black">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Rôle/Specialité</label>
+                    <input type="text" id="staffRole" placeholder="ex: Coiffeur, Barbe, etc." class="w-full p-3 rounded-xl bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border outline-none focus:ring-2 focus:ring-black">
+                </div>
+                <button type="submit" class="w-full bg-black dark:bg-white text-white dark:text-black font-bold py-3 rounded-xl hover:opacity-90 transition-all">
+                    Ajouter le membre du personnel
+                </button>
+            </form>
+        </section>
+
+        <!-- Staff List -->
+        <section>
+            <h3 class="font-bold mb-4">Membres du personnel</h3>
+            <div id="staffList" class="space-y-3">
+                <!-- Staff members will be injected here -->
+            </div>
+        </section>
+    </main>
+
+    <script type="module">
+        const MOCK_MODE = false;
+
+        // Firebase Setup
+        const firebaseConfig = {
+            apiKey: "AIzaSyAVmBbX-5cS07XTq6RSImH6TpOLM_nI-R8",
+            authDomain: "barbershop-quick-book.firebaseapp.com",
+            projectId: "barbershop-quick-book",
+            storageBucket: "barbershop-quick-book.firebasestorage.app",
+            messagingSenderId: "863498811120",
+            appId: "1:863498811120:web:55f7fc647156bc91cdb435"
+        };
+
+        let auth = null;
+        let db = null;
+
+        if (!MOCK_MODE) {
+            // Import Firebase modules dynamically
+            import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js').then(({ initializeApp }) => {
+            import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js').then(({ getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut }) => {
+                    import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js').then(({ getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy }) => {
+                        const app = initializeApp(firebaseConfig);
+                        auth = getAuth(app);
+                        db = getFirestore(app);
+
+                        // Make Firebase functions globally available
+                        window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+                        window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+                        window.collection = collection;
+                        window.addDoc = addDoc;
+                        window.getDocs = getDocs;
+                        window.deleteDoc = deleteDoc;
+                        window.doc = doc;
+                        window.query = query;
+                        window.orderBy = orderBy;
+
+                        console.log('Firebase initialized for admin');
+                        loadStaff();
+                    });
+                });
+            });
+        }
+
+        function init() {
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('userRole');
+                window.location.href = 'index.html';
+            });
+
+            document.getElementById('addStaffForm').addEventListener('submit', addStaffMember);
+        }
+
+        async function loadStaff() {
+            if (!db) return;
+
+            try {
+                const staffQuery = query(collection(db, "staff"), orderBy("name", "asc"));
+                const querySnapshot = await getDocs(staffQuery);
+                const staff = querySnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+
+                renderStaffList(staff);
+            } catch (error) {
+                console.error("Error loading staff:", error);
+                renderStaffList([]);
+            }
+        }
+
+        function renderStaffList(staff) {
+            const list = document.getElementById('staffList');
+            if (staff.length === 0) {
+                list.innerHTML = `<div class="text-center py-10 opacity-50">Aucun membre du personnel</div>`;
+                return;
+            }
+
+            list.innerHTML = staff.map(s => `
+                <div class="bg-light-surface dark:bg-dark-surface p-4 rounded-2xl border border-light-border dark:border-dark-border flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <img src="${s.img || 'https://i.pravatar.cc/300?u=' + s.email}" class="w-12 h-12 rounded-xl object-cover" alt="${s.name}">
+                        <div>
+                            <p class="font-bold">${s.name}</p>
+                            <p class="text-sm text-gray-500">${s.email}</p>
+                            <p class="text-xs text-gray-400">${s.role || 'Coiffeur'}</p>
+                        </div>
+                    </div>
+                    <button onclick="removeStaff('${s.id}')" class="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        async function addStaffMember(e) {
+            e.preventDefault();
+
+            const name = document.getElementById('staffName').value;
+            const email = document.getElementById('staffEmail').value;
+            const password = document.getElementById('staffPassword').value;
+            const img = document.getElementById('staffImage').value;
+            const role = document.getElementById('staffRole').value;
+
+            if (MOCK_MODE) {
+                console.log("Mock add staff:", { name, email, role });
+                alert("Membre ajouté (mode mock)");
+                e.target.reset();
+                return;
+            }
+
+            try {
+                if (!auth || !db) {
+                    throw new Error("Firebase not initialized");
+                }
+
+                // Store current admin credentials to re-authenticate later
+                const adminEmail = localStorage.getItem('adminEmail') || 'admin@barbershop.com';
+                const adminPassword = localStorage.getItem('adminPassword');
+
+                if (!adminPassword) {
+                    throw new Error("Admin password not stored. Please login again.");
+                }
+
+                // Sign out current admin user (required for creating new users)
+                await auth.signOut();
+
+                // Create Firebase Auth user for the new staff member
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+
+                // Sign back in as admin
+                await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
+
+                // Get next barber ID by checking existing barbers
+                const barbersSnapshot = await getDocs(collection(db, "barbers"));
+                const existingIds = barbersSnapshot.docs.map(doc => doc.data().id).sort((a, b) => a - b);
+                const nextBarberId = existingIds.length > 0 ? Math.max(...existingIds) + 1 : 1;
+
+                // Add to staff collection
+                const staffData = {
+                    name,
+                    email,
+                    barber_id: nextBarberId,
+                    role: role || 'Coiffeur',
+                    img: img || `https://i.pravatar.cc/300?u=${email}`,
+                    created_at: new Date().toISOString()
+                };
+
+                await addDoc(collection(db, "staff"), staffData);
+
+                // Add to barbers collection for public display
+                const barberData = {
+                    id: nextBarberId,
+                    name,
+                    role: role || 'Coiffeur',
+                    img: img || `https://i.pravatar.cc/300?u=${email}`
+                };
+
+                await addDoc(collection(db, "barbers"), barberData);
+
+                console.log("Staff member added:", user.uid);
+                alert("Membre du personnel ajouté avec succès!");
+
+                // Reset form and reload staff list
+                e.target.reset();
+                await loadStaff();
+
+            } catch (error) {
+                console.error("Error adding staff:", error);
+
+                // Try to sign back in as admin if something went wrong
+                try {
+                    const adminEmail = localStorage.getItem('adminEmail') || 'admin@barbershop.com';
+                    const adminPassword = localStorage.getItem('adminPassword');
+                    if (adminPassword) {
+                        await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
+                    }
+                } catch (reAuthError) {
+                    console.error("Failed to re-authenticate admin:", reAuthError);
+                }
+
+                alert("Erreur lors de l'ajout: " + error.message);
+            }
+        }
+
+        window.removeStaff = async (staffId) => {
+            if (confirm("Voulez-vous vraiment supprimer ce membre du personnel ?")) {
+                if (MOCK_MODE) {
+                    console.log("Mock remove staff:", staffId);
+                    alert("Membre supprimé (mode mock)");
+                    return;
+                }
+
+                try {
+                    if (!db) {
+                        throw new Error("Firebase not initialized");
+                    }
+
+                    // Get staff data first to find the barber_id
+                    const staffDoc = await getDocs(query(collection(db, "staff"), where("__name__", "==", staffId)));
+                    if (!staffDoc.empty) {
+                        const staffData = staffDoc.docs[0].data();
+                        const barberId = staffData.barber_id;
+
+                        // Remove from staff collection
+                        await deleteDoc(doc(db, "staff", staffId));
+
+                        // Also remove from barbers collection
+                        const barbersQuery = query(collection(db, "barbers"), where("id", "==", barberId));
+                        const barbersSnapshot = await getDocs(barbersQuery);
+                        barbersSnapshot.docs.forEach(async (barberDoc) => {
+                            await deleteDoc(doc(db, "barbers", barberDoc.id));
+                        });
+
+                        console.log("Staff removed:", staffId, "Barber ID:", barberId);
+                        alert("Membre du personnel supprimé!");
+                    }
+
+                    // Reload staff list
+                    await loadStaff();
+
+                } catch (error) {
+                    console.error("Error removing staff:", error);
+                    alert("Erreur lors de la suppression: " + error.message);
+                }
+            }
+        }
+
+        // Sync theme
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.classList.add('dark');
+        }
+
+        init();
+    </script>
+</body>
+</html>

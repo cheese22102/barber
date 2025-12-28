@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="fr" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BarberShop Quick-Book</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            bg: '#121212',
+                            surface: '#1E1E1E',
+                            text: '#FFFFFF',
+                            secondary: '#9CA3AF',
+                            border: '#374151'
+                        },
+                        light: {
+                            bg: '#F9FAFB',
+                            surface: '#FFFFFF',
+                            text: '#111827',
+                            secondary: '#6B7280',
+                            border: '#E5E7EB'
+                        },
+                        accent: {
+                            whatsapp: '#25D366',
+                            success: '#10B981',
+                            selected: '#000000'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        arabic: ['Cairo', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            -webkit-tap-highlight-color: transparent;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .bottom-sheet {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .bottom-sheet.hidden-sheet {
+            transform: translateY(100%);
+        }
+        [dir="rtl"] .font-sans {
+            font-family: 'Cairo', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text min-h-screen font-sans transition-colors duration-200">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-40 bg-light-surface/80 dark:bg-dark-surface/80 backdrop-blur-md border-b border-light-border dark:border-dark-border px-4 py-3 flex justify-between items-center">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-black dark:bg-white rounded-lg flex items-center justify-center">
+                <span class="text-white dark:text-black font-black text-xs">BQ</span>
+            </div>
+            <h1 class="text-xl font-black tracking-tight" data-i18n="app_title">BarberShop</h1>
+        </div>
+        <div class="flex items-center gap-2">
+            <!-- Language Switcher -->
+            <div class="relative">
+                <button id="langBtn" class="flex items-center gap-1 px-3 py-2 rounded-xl bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border text-sm font-bold transition-all hover:scale-105 active:scale-95">
+                    <span id="currentLang">FR</span>
+                    <svg class="w-3 h-3 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </button>
+                <div id="langDropdown" class="absolute top-full mt-2 right-0 bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-xl shadow-lg opacity-0 invisible transition-all duration-200 z-50 min-w-[80px]">
+                    <button onclick="setLanguage('fr')" class="w-full px-4 py-2 text-left text-sm font-bold hover:bg-light-bg dark:hover:bg-dark-bg rounded-t-xl transition-colors">FR</button>
+                    <button onclick="setLanguage('ar')" class="w-full px-4 py-2 text-left text-sm font-bold hover:bg-light-bg dark:hover:bg-dark-bg transition-colors">AR</button>
+                    <button onclick="setLanguage('en')" class="w-full px-4 py-2 text-left text-sm font-bold hover:bg-light-bg dark:hover:bg-dark-bg rounded-b-xl transition-colors">EN</button>
+                </div>
+            </div>
+            <!-- Theme Toggle -->
+            <button id="themeToggle" class="p-2 rounded-xl bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border transition-all hover:scale-105 active:scale-95">
+                <svg id="sunIcon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"></path></svg>
+                <svg id="moonIcon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+            </button>
+        </div>
+    </header>
+
+    <main class="pb-24">
+        <!-- Hero Section & Shop Info -->
+        <section class="mt-4 px-4">
+            <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-gray-900 to-black p-8 text-white shadow-2xl">
+                <div class="relative z-10">
+                    <span class="inline-block px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-[10px] font-bold uppercase tracking-widest mb-4" data-i18n="location">La Marsa, Tunis</span>
+                    <h2 class="text-4xl font-black mb-2 leading-tight" data-i18n="brand_name">BarberShop<br>Quick-Book</h2>
+                    <p class="text-gray-400 text-sm mb-6 max-w-[200px]" data-i18n="hero_subtitle">Expérience de coiffure premium pour l'homme moderne.</p>
+                    
+                    <div class="flex items-center gap-4">
+                        <a href="https://instagram.com" target="_blank" class="p-3 bg-white/10 hover:bg-white/20 rounded-2xl transition-all">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                        </a>
+                        <a href="https://maps.google.com" target="_blank" class="p-3 bg-white/10 hover:bg-white/20 rounded-2xl transition-all">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        </a>
+                        <a href="tel:+21699999999" class="p-3 bg-white/10 hover:bg-white/20 rounded-2xl transition-all">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                        </a>
+                    </div>
+                </div>
+                <!-- Abstract Design Elements -->
+                <div class="absolute -top-24 -right-24 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
+                <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
+            </div>
+        </section>
+
+        <!-- Step 1: Select Barber -->
+        <section class="mt-8 px-4">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-8 h-8 bg-accent-success/10 rounded-full flex items-center justify-center">
+                    <span class="text-accent-success font-bold text-sm">1</span>
+                </div>
+                <h2 class="text-lg font-black text-light-text dark:text-dark-text" data-i18n="select_barber">👨 Choisissez votre coiffeur</h2>
+            </div>
+            <div id="barberList" class="flex gap-4 overflow-x-auto no-scrollbar pb-2 px-1">
+                <!-- Barbers will be injected here -->
+            </div>
+            <p class="text-xs text-light-secondary dark:text-dark-secondary mt-3 text-center opacity-70" data-i18n="select_barber_hint">Cliquez sur un coiffeur pour commencer</p>
+        </section>
+
+        <!-- Step 2: Select Date -->
+        <section class="mt-12 px-4">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-8 h-8 bg-accent-success/10 rounded-full flex items-center justify-center">
+                    <span class="text-accent-success font-bold text-sm">2</span>
+                </div>
+                <h2 class="text-lg font-black text-light-text dark:text-dark-text" data-i18n="select_date">📅 Choisissez une date</h2>
+            </div>
+            <div id="dateList" class="flex gap-3 overflow-x-auto no-scrollbar pb-2 px-1">
+                <!-- Dates will be injected here -->
+            </div>
+            <p class="text-xs text-light-secondary dark:text-dark-secondary mt-3 text-center opacity-70" data-i18n="select_date_hint">Choisissez une date disponible</p>
+        </section>
+
+        <!-- Step 3: Select Time Slot -->
+        <section class="mt-12 px-4">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-8 h-8 bg-accent-success/10 rounded-full flex items-center justify-center">
+                    <span class="text-accent-success font-bold text-sm">3</span>
+                </div>
+                <h2 class="text-lg font-black text-light-text dark:text-dark-text" data-i18n="select_time">⏰ Choisissez l'heure</h2>
+            </div>
+            <div id="timeGrid" class="grid grid-cols-3 gap-3 px-1">
+                <!-- Times will be injected here -->
+            </div>
+            <p class="text-xs text-light-secondary dark:text-dark-secondary mt-3 text-center opacity-70" data-i18n="select_time_hint">Sélectionnez un créneau disponible</p>
+        </section>
+    </main>
+
+    <!-- Sticky Bottom Action Bar -->
+    <div id="stickyBar" class="fixed bottom-0 left-0 right-0 p-4 bg-light-surface dark:bg-dark-surface border-t border-light-border dark:border-dark-border transform translate-y-full transition-transform duration-300 z-30">
+        <button id="openBookingBtn" class="w-full bg-light-text dark:bg-dark-text text-light-surface dark:text-dark-surface font-bold py-4 rounded-xl active:scale-[0.98] transition-transform" data-i18n="book_now">
+            Réserver maintenant
+        </button>
+    </div>
+
+    <!-- Bottom Sheet Booking Form -->
+    <div id="bottomSheetOverlay" class="fixed inset-0 bg-black/50 opacity-0 pointer-events-none transition-opacity duration-300 z-50"></div>
+    <div id="bottomSheet" class="fixed bottom-0 left-0 right-0 bg-light-surface dark:bg-dark-surface rounded-t-3xl z-50 bottom-sheet hidden-sheet max-h-[90vh] overflow-y-auto px-6 pt-2 pb-8">
+        <div class="w-12 h-1.5 bg-light-border dark:bg-dark-border rounded-full mx-auto my-4"></div>
+        <h2 class="text-2xl font-bold mb-6" data-i18n="complete_booking">Finaliser la réservation</h2>
+        
+        <form id="bookingForm" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium mb-1" data-i18n="label_name">Nom complet</label>
+                <input type="text" id="clientName" required class="w-full p-4 rounded-xl bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border focus:ring-2 focus:ring-accent-success outline-none transition-all">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1" data-i18n="label_phone">Numéro de téléphone (WhatsApp)</label>
+                <input type="tel" id="clientPhone" required placeholder="+216" class="w-full p-4 rounded-xl bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border focus:ring-2 focus:ring-accent-success outline-none transition-all">
+            </div>
+            <div class="pt-4">
+                <div class="bg-light-bg dark:bg-dark-bg p-4 rounded-xl mb-6 text-sm">
+                    <p class="flex justify-between mb-1"><span class="text-light-secondary dark:text-dark-secondary" data-i18n="summary_barber">Coiffeur:</span> <span id="summaryBarber" class="font-semibold"></span></p>
+                    <p class="flex justify-between"><span class="text-light-secondary dark:text-dark-secondary" data-i18n="summary_time">Date & Heure:</span> <span id="summaryDateTime" class="font-semibold"></span></p>
+                </div>
+                <button type="submit" class="w-full bg-accent-whatsapp text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                    <span data-i18n="confirm_whatsapp">Confirmer via WhatsApp</span>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Footer -->
+    <footer class="p-8 text-center text-light-secondary dark:text-dark-secondary">
+        <p class="text-xs">&copy; 2025 BarberShop Tunisia.</p>
+        <a href="staff.html" class="inline-block mt-4 text-[10px] opacity-20 hover:opacity-100 transition-opacity" data-i18n="staff_login">Staff Login</a>
+    </footer>
+
+    <!-- Logic -->
+    <script type="module">
+        const MOCK_MODE = false;
+
+        const i18n = {
+            fr: {
+                app_title: "BarberShop",
+                brand_name: "BarberShop<br>Quick-Book",
+                location: "Béja, Tunisie",
+                hero_subtitle: "Votre expérience de coiffure premium commence ici.",
+                select_barber: "👨 Choisissez votre coiffeur",
+                select_date: "📅 Choisissez une date",
+                select_time: "⏰ Choisissez l'heure",
+                book_now: "Réserver maintenant",
+                complete_booking: "Confirmer votre réservation",
+                label_name: "Votre nom complet",
+                label_phone: "Numéro WhatsApp (+216)",
+                summary_barber: "Coiffeur sélectionné:",
+                summary_time: "Rendez-vous prévu:",
+                confirm_whatsapp: "Confirmer par WhatsApp",
+                staff_login: "Espace personnel",
+                today: "Aujourd'hui",
+                closed: "Fermé le lundi",
+                select_barber_hint: "Cliquez sur un coiffeur pour commencer",
+                select_date_hint: "Choisissez une date disponible",
+                select_time_hint: "Sélectionnez un créneau disponible",
+                booking_success: "Réservation confirmée !",
+                whatsapp_msg: "Bonjour ! Je souhaite prendre rendez-vous pour une coupe de 1 heure avec {barber} le {date} à {time}. Mon nom est {name}. Merci !"
+            },
+            ar: {
+                app_title: "صالون الحلاقة",
+                brand_name: "صالون الحلاقة<br>حجز سريع",
+                location: "باجة، تونس",
+                hero_subtitle: "تجربة حلاقة فاخرة تنتظرك.",
+                select_barber: "👨 اختر حلاقك",
+                select_date: "📅 اختر التاريخ",
+                select_time: "⏰ اختر الوقت",
+                book_now: "احجز الآن",
+                complete_booking: "تأكيد الحجز",
+                label_name: "اسمك الكامل",
+                label_phone: "رقم واتساب (+216)",
+                summary_barber: "الحلاق المختار:",
+                summary_time: "موعد الحجز:",
+                confirm_whatsapp: "تأكيد عبر واتساب",
+                staff_login: "منطقة الموظفين",
+                today: "اليوم",
+                closed: "مغلق يوم الاثنين",
+                select_barber_hint: "اضغط على حلاق للبدء",
+                select_date_hint: "اختر تاريخ متاح",
+                select_time_hint: "اختر وقت متاح",
+                booking_success: "تم تأكيد الحجز!",
+                whatsapp_msg: "مرحبا! أريد حجز موعد لقصة شعر مدتها ساعة مع {barber} يوم {date} الساعة {time}. اسمي {name}. شكرا!"
+            },
+            en: {
+                app_title: "BarberShop",
+                brand_name: "BarberShop<br>Quick-Book",
+                location: "La Marsa, Tunis",
+                hero_subtitle: "Your premium grooming experience awaits.",
+                select_barber: "👨 Choose your barber",
+                select_date: "📅 Choose a date",
+                select_time: "⏰ Choose time",
+                book_now: "Book now",
+                complete_booking: "Confirm your booking",
+                label_name: "Your full name",
+                label_phone: "WhatsApp number (+216)",
+                summary_barber: "Selected barber:",
+                summary_time: "Appointment time:",
+                confirm_whatsapp: "Confirm via WhatsApp",
+                staff_login: "Staff area",
+                today: "Today",
+                closed: "Closed Mondays",
+                select_barber_hint: "Tap a barber to get started",
+                select_date_hint: "Pick an available date",
+                select_time_hint: "Choose an available slot",
+                booking_success: "Booking confirmed!",
+                whatsapp_msg: "Hi! I'd like to book a 1-hour haircut with {barber} on {date} at {time}. My name is {name}. Thank you!"
+            }
+        };
+
+        let barbers = [];
+
+        const timeSlots = ["09:00", "10:00", "11:00", "12:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00"];
+
+        let state = {
+            lang: localStorage.getItem('lang') || 'fr',
+            theme: localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'),
+            selectedBarber: null,
+            selectedDate: null,
+            selectedTime: null
+        };
+
+        // DOM Elements
+        const langBtn = document.getElementById('langBtn');
+        const currentLang = document.getElementById('currentLang');
+        const langDropdown = document.getElementById('langDropdown');
+        const themeToggle = document.getElementById('themeToggle');
+        const sunIcon = document.getElementById('sunIcon');
+        const moonIcon = document.getElementById('moonIcon');
+        const barberList = document.getElementById('barberList');
+        const dateList = document.getElementById('dateList');
+        const timeGrid = document.getElementById('timeGrid');
+        const stickyBar = document.getElementById('stickyBar');
+        const openBookingBtn = document.getElementById('openBookingBtn');
+        const bottomSheet = document.getElementById('bottomSheet');
+        const bottomSheetOverlay = document.getElementById('bottomSheetOverlay');
+        const bookingForm = document.getElementById('bookingForm');
+
+        // Language Dropdown Logic
+        function toggleLangDropdown() {
+            const isVisible = !langDropdown.classList.contains('opacity-0');
+            if (isVisible) {
+                closeLangDropdown();
+            } else {
+                openLangDropdown();
+            }
+        }
+
+        function openLangDropdown() {
+            langDropdown.classList.remove('opacity-0', 'invisible');
+            langBtn.querySelector('svg').style.transform = 'rotate(180deg)';
+        }
+
+        function closeLangDropdown() {
+            langDropdown.classList.add('opacity-0', 'invisible');
+            langBtn.querySelector('svg').style.transform = 'rotate(0deg)';
+        }
+
+        function updateCurrentLangDisplay() {
+            currentLang.textContent = state.lang.toUpperCase();
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!langBtn.contains(e.target) && !langDropdown.contains(e.target)) {
+                closeLangDropdown();
+            }
+        });
+
+        // Initialization
+        function init() {
+            setTheme(state.theme);
+            setLanguage(state.lang);
+            // renderBarbers(); // Will be called after Firebase loads barbers
+
+            // Language dropdown setup
+            langBtn.addEventListener('click', toggleLangDropdown);
+            updateCurrentLangDisplay();
+
+            themeToggle.addEventListener('click', toggleTheme);
+            openBookingBtn.addEventListener('click', openBottomSheet);
+            bottomSheetOverlay.addEventListener('click', closeBottomSheet);
+
+            bookingForm.addEventListener('submit', handleBooking);
+        }
+
+        async function loadBarbers() {
+            if (!db) return;
+
+            try {
+                const querySnapshot = await getDocs(collection(db, "barbers"));
+                barbers = querySnapshot.docs.map(doc => ({
+                    id: doc.data().id,
+                    name: doc.data().name,
+                    role: doc.data().role,
+                    img: doc.data().img
+                }));
+
+                renderBarbers();
+                console.log('Barbers loaded:', barbers);
+            } catch (error) {
+                console.error("Error loading barbers:", error);
+                // Fallback to empty array
+                barbers = [];
+                renderBarbers();
+            }
+        }
+
+        // Theme Logic
+        function setTheme(theme) {
+            state.theme = theme;
+            localStorage.setItem('theme', theme);
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+                sunIcon.classList.remove('hidden');
+                moonIcon.classList.add('hidden');
+            } else {
+                document.documentElement.classList.remove('dark');
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
+            }
+        }
+
+        function toggleTheme() {
+            setTheme(state.theme === 'dark' ? 'light' : 'dark');
+        }
+
+        // Language Logic
+        function setLanguage(lang) {
+            state.lang = lang;
+            localStorage.setItem('lang', lang);
+            document.documentElement.lang = lang;
+            document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (key === 'brand_name') {
+                    el.innerHTML = i18n[lang][key]; // Use innerHTML for brand_name since it contains <br>
+                } else {
+                    el.textContent = i18n[lang][key];
+                }
+            });
+
+            updateCurrentLangDisplay();
+            closeLangDropdown();
+            renderDates(); // Refresh dates for language
+            if (state.selectedBarber) renderBarbers(); // Refresh selection state UI
+        }
+
+        // Make setLanguage globally accessible
+        window.setLanguage = setLanguage;
+
+        // UI Rendering
+        function renderBarbers() {
+            barberList.innerHTML = barbers.map(barber => `
+                <div onclick="selectBarber(${barber.id})" class="flex-shrink-0 flex flex-col items-center gap-3 cursor-pointer group">
+                    <div class="relative">
+                        <div class="w-24 h-24 rounded-3xl overflow-hidden border-2 transition-all duration-300 transform ${state.selectedBarber === barber.id ? 'border-black dark:border-white scale-105 shadow-xl' : 'border-transparent opacity-80 group-hover:opacity-100'}">
+                            <img src="${barber.img}" class="w-full h-full object-cover" alt="${barber.name}">
+                        </div>
+                        ${state.selectedBarber === barber.id ? `
+                        <div class="absolute -bottom-2 -right-2 bg-black dark:bg-white text-white dark:text-black rounded-full p-1.5 shadow-lg">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                        ` : ''}
+                    </div>
+                    <div class="text-center">
+                        <p class="text-sm font-black tracking-tight">${barber.name}</p>
+                        <p class="text-[10px] font-bold uppercase tracking-widest text-light-secondary dark:text-dark-secondary opacity-60">${barber.role}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderDates() {
+            const dates = [];
+            for (let i = 0; i < 14; i++) { // Show 2 weeks
+                const date = new Date();
+                date.setDate(date.getDate() + i);
+                dates.push(date);
+            }
+
+            dateList.innerHTML = dates.map((date, i) => {
+                const isToday = i === 0;
+                const dayOfWeek = date.getDay(); // 0 is Sunday, 1 is Monday
+                const isMonday = dayOfWeek === 1;
+                const dayName = isToday ? i18n[state.lang].today : date.toLocaleDateString(state.lang, { weekday: 'short' });
+                const dayNum = date.getDate();
+                const dateISO = date.toISOString().split('T')[0];
+                const isSelected = state.selectedDate === dateISO;
+
+                if (isMonday) {
+                    return `
+                        <div class="flex-shrink-0 w-16 h-20 rounded-2xl flex flex-col items-center justify-center gap-1 bg-light-border/20 dark:bg-dark-border/20 opacity-40 cursor-not-allowed">
+                            <span class="text-[10px] uppercase font-semibold">${dayName}</span>
+                            <span class="text-lg font-bold">${dayNum}</span>
+                            <span class="text-[8px] uppercase font-black">${i18n[state.lang].closed}</span>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div onclick="selectDate('${dateISO}')" class="flex-shrink-0 w-16 h-20 rounded-2xl flex flex-col items-center justify-center gap-1 cursor-pointer transition-all ${isSelected ? 'bg-black dark:bg-white text-white dark:text-black scale-105 shadow-lg' : 'bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border hover:border-black dark:hover:border-white'}">
+                        <span class="text-[10px] uppercase font-semibold opacity-70">${dayName}</span>
+                        <span class="text-lg font-bold">${dayNum}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        window.selectBarber = (id) => {
+            state.selectedBarber = id;
+            state.selectedTime = null; // Reset time
+            renderBarbers();
+            renderTimeSlots();
+            checkStickyBar();
+        }
+
+        window.selectDate = (dateISO) => {
+            state.selectedDate = dateISO;
+            state.selectedTime = null; // Reset time
+            renderDates();
+            renderTimeSlots();
+            checkStickyBar();
+        }
+
+        async function renderTimeSlots() {
+            if (!state.selectedBarber) {
+                timeGrid.innerHTML = `
+                    <div class="col-span-3 py-12 text-center">
+                        <div class="text-4xl mb-3">👨</div>
+                        <p class="text-light-secondary dark:text-dark-secondary font-medium">${i18n[state.lang].select_barber_hint}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            if (!state.selectedDate) {
+                timeGrid.innerHTML = `
+                    <div class="col-span-3 py-12 text-center">
+                        <div class="text-4xl mb-3">📅</div>
+                        <p class="text-light-secondary dark:text-dark-secondary font-medium">${i18n[state.lang].select_date_hint}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const date = new Date(state.selectedDate);
+            if (date.getDay() === 1) { // Monday
+                timeGrid.innerHTML = `
+                    <div class="col-span-3 py-12 text-center">
+                        <div class="text-4xl mb-3">😴</div>
+                        <p class="text-red-500 font-bold text-lg">${i18n[state.lang].closed}</p>
+                        <p class="text-light-secondary dark:text-dark-secondary text-sm mt-2">Nous rouvrons mardi !</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Get busy slots from Firebase or mock data
+            let busySlots = [];
+            if (MOCK_MODE) {
+                busySlots = ["10:00", "15:00", "17:00"];
+            } else if (db) {
+                try {
+                    // Query Firestore for existing bookings on this date for this barber
+                    const q = query(
+                        collection(db, "appointments"),
+                        where("date", "==", state.selectedDate),
+                        where("barber_id", "==", state.selectedBarber),
+                        where("status", "in", ["pending", "confirmed"])
+                    );
+                    const querySnapshot = await getDocs(q);
+                    busySlots = querySnapshot.docs.map(doc => doc.data().time);
+                } catch (error) {
+                    console.error("Error fetching bookings:", error);
+                    // Fallback to empty array if Firebase fails
+                }
+            }
+
+            timeGrid.innerHTML = timeSlots.map(time => {
+                const isBusy = busySlots.includes(time);
+                const isSelected = state.selectedTime === time;
+
+                return `
+                    <button
+                        ${isBusy ? 'disabled' : `onclick="selectTime('${time}')"`}
+                        class="p-4 rounded-2xl text-center font-black transition-all ${isBusy ? 'bg-light-border/30 dark:bg-dark-border/30 text-light-secondary/50 dark:text-dark-secondary/50 cursor-not-allowed opacity-60' : (isSelected ? 'bg-black dark:bg-white text-white dark:text-black scale-105 shadow-xl' : 'bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border active:scale-95 hover:border-black dark:hover:border-white')}">
+                        ${time}
+                    </button>
+                `;
+            }).join('');
+        }
+
+        window.selectTime = (time) => {
+            state.selectedTime = time;
+            renderTimeSlots();
+            checkStickyBar();
+        }
+
+        function checkStickyBar() {
+            if (state.selectedBarber && state.selectedDate && state.selectedTime) {
+                stickyBar.classList.remove('translate-y-full');
+            } else {
+                stickyBar.classList.add('translate-y-full');
+            }
+        }
+
+        function openBottomSheet() {
+            const barber = barbers.find(b => b.id === state.selectedBarber);
+            document.getElementById('summaryBarber').textContent = barber.name;
+            document.getElementById('summaryDateTime').textContent = `${state.selectedDate} @ ${state.selectedTime}`;
+            
+            bottomSheetOverlay.classList.remove('opacity-0', 'pointer-events-none');
+            bottomSheet.classList.remove('hidden-sheet');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeBottomSheet() {
+            bottomSheetOverlay.classList.add('opacity-0', 'pointer-events-none');
+            bottomSheet.classList.add('hidden-sheet');
+            document.body.style.overflow = '';
+        }
+
+        // Firebase Setup
+        const firebaseConfig = {
+            apiKey: "AIzaSyAVmBbX-5cS07XTq6RSImH6TpOLM_nI-R8",
+            authDomain: "barbershop-quick-book.firebaseapp.com",
+            projectId: "barbershop-quick-book",
+            storageBucket: "barbershop-quick-book.firebasestorage.app",
+            messagingSenderId: "863498811120",
+            appId: "1:863498811120:web:55f7fc647156bc91cdb435"
+        };
+
+        // Initialize Firebase (only when not in mock mode)
+        let db = null;
+        let auth = null;
+
+        if (!MOCK_MODE) {
+            // Import Firebase modules dynamically
+            import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js').then(({ initializeApp }) => {
+                import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js').then(({ getFirestore, collection, addDoc, query, where, getDocs, orderBy, limit }) => {
+                    import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js').then(({ getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }) => {
+                        const app = initializeApp(firebaseConfig);
+                        db = getFirestore(app);
+                        auth = getAuth(app);
+
+                        // Make Firebase functions globally available
+                        window.collection = collection;
+                        window.addDoc = addDoc;
+                        window.query = query;
+                        window.where = where;
+                        window.getDocs = getDocs;
+
+                        // Load barbers after Firebase is ready
+                        loadBarbers();
+
+                        console.log('Firebase initialized successfully');
+                    });
+                });
+            });
+        }
+
+        async function handleBooking(e) {
+            e.preventDefault();
+            const name = document.getElementById('clientName').value;
+            const phone = document.getElementById('clientPhone').value;
+            const barber = barbers.find(b => b.id === state.selectedBarber);
+
+            const bookingData = {
+                barber_id: state.selectedBarber,
+                client_name: name,
+                client_phone: phone,
+                date: state.selectedDate,
+                time: state.selectedTime,
+                status: 'pending',
+                created_at: new Date().toISOString()
+            };
+
+            const msg = i18n[state.lang].whatsapp_msg
+                .replace('{barber}', barber.name)
+                .replace('{date}', state.selectedDate)
+                .replace('{time}', state.selectedTime)
+                .replace('{name}', name);
+
+            const whatsappUrl = `https://wa.me/21699999999?text=${encodeURIComponent(msg)}`;
+
+            if (MOCK_MODE) {
+                console.log("Mock Booking Success:", bookingData);
+                // Reset form and close modal
+                bookingForm.reset();
+                closeBottomSheet();
+                // Reset state
+                state.selectedTime = null;
+                checkStickyBar();
+                // Show success message
+                alert(i18n[state.lang].booking_success);
+            } else {
+                try {
+                    if (!db) {
+                        throw new Error("Firebase not initialized");
+                    }
+
+                    // Save to Firestore
+                    const docRef = await addDoc(collection(db, "appointments"), bookingData);
+                    console.log("Booking saved with ID:", docRef.id);
+
+                    // Reset form and close modal
+                    bookingForm.reset();
+                    closeBottomSheet();
+                    // Reset state
+                    state.selectedTime = null;
+                    checkStickyBar();
+                    // Refresh time slots to show the new booking
+                    await renderTimeSlots();
+
+                    // Show success message
+                    alert(i18n[state.lang].booking_success);
+
+                } catch (error) {
+                    console.error("Error saving booking:", error);
+                    alert("Erreur lors de la réservation: " + error.message);
+                }
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
