@@ -12,8 +12,29 @@
             theme: {
                 extend: {
                     colors: {
-                        dark: { bg: '#121212', surface: '#1E1E1E', text: '#FFFFFF', border: '#374151' },
-                        light: { bg: '#F9FAFB', surface: '#FFFFFF', text: '#111827', border: '#E5E7EB' }
+                        dark: {
+                            bg: '#121212',
+                            surface: '#1E1E1E',
+                            text: '#E5E7EB',
+                            secondary: '#9CA3AF',
+                            border: '#374151'
+                        },
+                        light: {
+                            bg: '#F9FAFB',
+                            surface: '#FFFFFF',
+                            text: '#374151',
+                            secondary: '#6B7280',
+                            border: '#E5E7EB'
+                        },
+                        accent: {
+                            whatsapp: '#25D366',
+                            success: '#10B981',
+                            selected: '#000000'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        arabic: ['Cairo', 'sans-serif']
                     }
                 }
             }
@@ -30,57 +51,351 @@
     </script>
 
     <header class="p-4 border-b border-light-border dark:border-dark-border flex justify-between items-center bg-light-surface dark:bg-dark-surface sticky top-0 z-10">
-        <div>
-            <h1 class="font-bold text-lg">Admin Panel</h1>
-            <p class="text-xs text-gray-500">Gestion du personnel</p>
+        <!-- Theme Toggle -->
+        <div class="flex items-center gap-3">
+            <!-- Language Switcher -->
+            <div class="relative">
+                <button id="langBtn" class="flex items-center gap-1 px-3 py-2 rounded-xl bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border text-sm font-bold transition-all hover:scale-105 active:scale-95">
+                    <span id="currentLang">FR</span>
+                    <svg class="w-3 h-3 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </button>
+                <div id="langDropdown" class="absolute top-full mt-2 right-0 bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-xl shadow-lg opacity-0 invisible transition-all duration-200 z-50 min-w-[80px]">
+                    <button onclick="setLanguage('fr')" class="w-full px-4 py-2 text-left text-sm font-bold hover:bg-light-bg dark:hover:bg-dark-bg rounded-t-xl transition-colors">FR</button>
+                    <button onclick="setLanguage('ar')" class="w-full px-4 py-2 text-left text-sm font-bold hover:bg-light-bg dark:hover:bg-dark-bg transition-colors">AR</button>
+                    <button onclick="setLanguage('en')" class="w-full px-4 py-2 text-left text-sm font-bold hover:bg-light-bg dark:hover:bg-dark-bg rounded-b-xl transition-colors">EN</button>
+                </div>
+            </div>
+            <button id="themeToggle" class="p-2 rounded-xl bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border transition-all hover:scale-105 active:scale-95">
+                <svg id="sunIcon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"></path></svg>
+                <svg id="moonIcon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+            </button>
+            <div>
+                <h1 class="font-bold text-lg" data-i18n="admin_title">Admin Panel</h1>
+                <p class="text-xs text-light-secondary dark:text-dark-secondary" data-i18n="admin_subtitle">Gestion du personnel</p>
+            </div>
         </div>
-        <button id="logoutBtn" class="text-sm font-semibold text-red-500 px-3 py-1 rounded-lg border border-red-500/20">Logout</button>
+        <button id="logoutBtn" class="text-sm font-semibold text-red-500 px-3 py-1 rounded-lg border border-red-500/20 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" data-i18n="logout">Logout</button>
     </header>
 
     <main class="p-4 space-y-6">
-        <!-- Add Staff Member -->
+        <!-- Add/Edit Barber -->
         <section class="bg-light-surface dark:bg-dark-surface p-6 rounded-3xl border border-light-border dark:border-dark-border">
-            <h3 class="font-bold mb-4">Ajouter un membre du personnel</h3>
-            <form id="addStaffForm" class="space-y-4">
+            <h3 class="font-bold mb-4" id="formTitle" data-i18n="add_barber_title">Ajouter un coiffeur</h3>
+            <form id="barberForm" class="space-y-4">
+                <input type="hidden" id="barberId">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium mb-1">Nom complet</label>
-                        <input type="text" id="staffName" required class="w-full p-3 rounded-xl bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border outline-none focus:ring-2 focus:ring-black">
+                        <label class="block text-sm font-medium mb-1" data-i18n="full_name">Nom complet</label>
+                        <input type="text" id="barberName" required class="w-full p-3 rounded-xl bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border outline-none focus:ring-2 focus:ring-accent-selected text-base">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium mb-1">Email</label>
-                        <input type="email" id="staffEmail" required class="w-full p-3 rounded-xl bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border outline-none focus:ring-2 focus:ring-black">
+                        <label class="block text-sm font-medium mb-1" data-i18n="email">Email</label>
+                        <input type="email" id="barberEmail" required class="w-full p-3 rounded-xl bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border outline-none focus:ring-2 focus:ring-accent-selected text-base">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium mb-1">Mot de passe</label>
-                        <input type="password" id="staffPassword" required class="w-full p-3 rounded-xl bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border outline-none focus:ring-2 focus:ring-black">
+                        <label class="block text-sm font-medium mb-1" data-i18n="password">Mot de passe</label>
+                        <input type="password" id="barberPassword" required class="w-full p-3 rounded-xl bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border outline-none focus:ring-2 focus:ring-accent-selected text-base">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium mb-1">URL de l'image</label>
-                        <input type="url" id="staffImage" placeholder="https://..." class="w-full p-3 rounded-xl bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border outline-none focus:ring-2 focus:ring-black">
+                        <label class="block text-sm font-medium mb-1" data-i18n="role_specialty">Rôle/Specialité</label>
+                        <input type="text" id="barberRole" placeholder="ex: Coiffeur, Barbe, etc." class="w-full p-3 rounded-xl bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border outline-none focus:ring-2 focus:ring-accent-selected text-base">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium mb-1" data-i18n="barber_image">Photo du coiffeur</label>
+                        <input type="file" id="barberImage" accept="image/*" class="w-full p-3 rounded-xl bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border outline-none focus:ring-2 focus:ring-accent-selected text-base file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-accent-selected file:text-light-surface hover:file:bg-accent-selected/90">
+                        <p class="text-xs text-light-secondary dark:text-dark-secondary mt-1" data-i18n="image_help">Sélectionnez une image (JPG, PNG, max 5MB)</p>
                     </div>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium mb-1">Rôle/Specialité</label>
-                    <input type="text" id="staffRole" placeholder="ex: Coiffeur, Barbe, etc." class="w-full p-3 rounded-xl bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border outline-none focus:ring-2 focus:ring-black">
+                <div class="flex gap-2">
+                    <button type="submit" class="flex-1 bg-accent-selected dark:bg-light-surface text-light-surface dark:text-dark-text font-bold py-3 rounded-xl hover:opacity-90 transition-all" id="submitBtn" data-i18n="add_barber_button">
+                        Ajouter le coiffeur
+                    </button>
+                    <button type="button" id="cancelBtn" class="hidden px-4 py-3 border border-light-border dark:border-dark-border rounded-xl hover:bg-light-bg dark:hover:bg-dark-bg transition-all" data-i18n="cancel">Annuler</button>
                 </div>
-                <button type="submit" class="w-full bg-black dark:bg-white text-white dark:text-black font-bold py-3 rounded-xl hover:opacity-90 transition-all">
-                    Ajouter le membre du personnel
-                </button>
             </form>
         </section>
 
-        <!-- Staff List -->
+        <!-- Barber List -->
         <section>
-            <h3 class="font-bold mb-4">Membres du personnel</h3>
-            <div id="staffList" class="space-y-3">
-                <!-- Staff members will be injected here -->
+            <h3 class="font-bold mb-4" data-i18n="barber_list_title">Coiffeurs</h3>
+            <div id="barberList" class="space-y-3">
+                <!-- Barbers will be injected here -->
             </div>
         </section>
     </main>
 
+    <!-- Barber Stats Modal -->
+    <div id="statsModal" class="fixed inset-0 bg-black/50 opacity-0 pointer-events-none transition-opacity duration-300 z-50 flex items-center justify-center p-4">
+        <div class="bg-light-surface dark:bg-dark-surface rounded-3xl border border-light-border dark:border-dark-border max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-light-border dark:border-dark-border flex items-center justify-between">
+                <h2 class="text-xl font-bold" id="statsTitle">Statistiques du coiffeur</h2>
+                <button id="closeStatsBtn" class="p-2 hover:bg-light-bg dark:hover:bg-dark-bg rounded-xl transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="p-6 space-y-6">
+                <!-- Barber Info -->
+                <div class="flex items-center gap-4">
+                    <img id="statsBarberImg" class="w-16 h-16 rounded-2xl object-cover" alt="">
+                    <div>
+                        <h3 class="font-bold text-lg" id="statsBarberName"></h3>
+                        <p class="text-light-secondary dark:text-dark-secondary" id="statsBarberRole"></p>
+                    </div>
+                </div>
+
+                <!-- Month Filter -->
+                <div>
+                    <label class="block text-sm font-medium mb-2" data-i18n="select_month">Sélectionner un mois</label>
+                    <select id="monthFilter" class="w-full p-3 rounded-xl bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border outline-none focus:ring-2 focus:ring-accent-selected">
+                        <option value="all" data-i18n="all_months">Tous les mois</option>
+                        <!-- Months will be populated by JS -->
+                    </select>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-light-bg dark:bg-dark-bg p-4 rounded-2xl text-center">
+                        <div class="text-2xl font-black text-accent-success" id="totalReservations">0</div>
+                        <div class="text-sm text-light-secondary dark:text-dark-secondary" data-i18n="total_reservations">Total réservations</div>
+                    </div>
+                    <div class="bg-light-bg dark:bg-dark-bg p-4 rounded-2xl text-center">
+                        <div class="text-2xl font-black text-blue-500" id="confirmedReservations">0</div>
+                        <div class="text-sm text-light-secondary dark:text-dark-secondary" data-i18n="confirmed_reservations">Confirmées</div>
+                    </div>
+                    <div class="bg-light-bg dark:bg-dark-bg p-4 rounded-2xl text-center">
+                        <div class="text-2xl font-black text-yellow-500" id="pendingReservations">0</div>
+                        <div class="text-sm text-light-secondary dark:text-dark-secondary" data-i18n="pending_reservations">En attente</div>
+                    </div>
+                </div>
+
+                <!-- Monthly Chart -->
+                <div>
+                    <h4 class="font-bold mb-4" data-i18n="monthly_stats">Statistiques mensuelles</h4>
+                    <div id="monthlyChart" class="space-y-3">
+                        <!-- Monthly data will be injected here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Snackbar for notifications -->
+    <div id="snackbar" class="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 z-50 opacity-0 invisible transition-all duration-300">
+        <div class="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-xl p-4 shadow-lg flex items-center gap-3">
+            <div id="snackbarIcon" class="flex-shrink-0 w-6 h-6">
+                <!-- Icon will be set by JavaScript -->
+            </div>
+            <div class="flex-1">
+                <p id="snackbarMessage" class="text-sm font-medium"></p>
+            </div>
+            <button id="snackbarClose" class="flex-shrink-0 w-5 h-5 text-light-secondary dark:text-dark-secondary hover:text-light-text dark:hover:text-dark-text transition-colors">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+
     <script type="module">
         const MOCK_MODE = false;
+
+        const i18n = {
+            fr: {
+                admin_title: "Panneau d'administration",
+                admin_subtitle: "Gestion des coiffeurs",
+                logout: "Déconnexion",
+                add_barber_title: "Ajouter un coiffeur",
+                edit_barber_title: "Modifier le coiffeur",
+                full_name: "Nom complet",
+                email: "Email",
+                password: "Mot de passe",
+                role_specialty: "Rôle/Specialité",
+                barber_image: "Photo du coiffeur",
+                image_help: "Sélectionnez une image (JPG, PNG, max 5MB)",
+                add_barber_button: "Ajouter le coiffeur",
+                edit_barber_button: "Modifier le coiffeur",
+                barber_list_title: "Coiffeurs",
+                no_barbers: "Aucun coiffeur",
+                select_month: "Sélectionner un mois",
+                all_months: "Tous les mois",
+                total_reservations: "Total réservations",
+                confirmed_reservations: "Confirmées",
+                pending_reservations: "En attente",
+                monthly_stats: "Statistiques mensuelles",
+                cancel: "Annuler",
+                delete_confirm: "Voulez-vous vraiment supprimer ce coiffeur ?",
+                barber_added: "Coiffeur ajouté avec succès!",
+                barber_updated: "Coiffeur modifié avec succès!",
+                barber_removed: "Coiffeur supprimé!",
+                view_stats: "Voir les statistiques",
+                edit: "Modifier",
+                delete: "Supprimer",
+                error: "Erreur",
+                add_error: "Erreur lors de l'ajout",
+                update_error: "Erreur lors de la modification",
+                remove_error: "Erreur lors de la suppression",
+                stats_title: "Statistiques du coiffeur",
+                reservations: "réservations",
+                loading_error: "Erreur lors du chargement",
+                uploading: "Téléchargement...",
+                auth_error_missing: "Erreur d'authentification: identifiants manquants"
+            },
+            ar: {
+                admin_title: "لوحة الإدارة",
+                admin_subtitle: "إدارة الحلاقين",
+                logout: "تسجيل الخروج",
+                add_barber_title: "إضافة حلاق",
+                edit_barber_title: "تعديل الحلاق",
+                full_name: "الاسم الكامل",
+                email: "البريد الإلكتروني",
+                password: "كلمة المرور",
+                role_specialty: "الدور/التخصص",
+                barber_image: "صورة الحلاق",
+                image_help: "اختر صورة (JPG، PNG، حد أقصى 5 ميغابايت)",
+                add_barber_button: "إضافة الحلاق",
+                edit_barber_button: "تعديل الحلاق",
+                barber_list_title: "الحلاقون",
+                no_barbers: "لا يوجد حلاقون",
+                select_month: "اختر الشهر",
+                all_months: "جميع الأشهر",
+                total_reservations: "إجمالي الحجوزات",
+                confirmed_reservations: "مؤكدة",
+                pending_reservations: "في الانتظار",
+                monthly_stats: "الإحصائيات الشهرية",
+                cancel: "إلغاء",
+                delete_confirm: "هل تريد حقاً حذف هذا الحلاق؟",
+                barber_added: "تم إضافة الحلاق بنجاح!",
+                barber_updated: "تم تعديل الحلاق بنجاح!",
+                barber_removed: "تم حذف الحلاق!",
+                view_stats: "عرض الإحصائيات",
+                edit: "تعديل",
+                delete: "حذف",
+                error: "خطأ",
+                add_error: "خطأ في الإضافة",
+                update_error: "خطأ في التعديل",
+                remove_error: "خطأ في الحذف",
+                stats_title: "إحصائيات الحلاق",
+                reservations: "حجوزات",
+                loading_error: "خطأ في التحميل",
+                uploading: "جارٍ التحميل...",
+                auth_error_missing: "خطأ في المصادقة: بيانات الاعتماد مفقودة"
+            },
+            en: {
+                admin_title: "Admin Panel",
+                admin_subtitle: "Barber management",
+                logout: "Logout",
+                add_barber_title: "Add barber",
+                edit_barber_title: "Edit barber",
+                full_name: "Full name",
+                email: "Email",
+                password: "Password",
+                role_specialty: "Role/Specialty",
+                barber_image: "Barber image",
+                image_help: "Select an image (JPG, PNG, max 5MB)",
+                add_barber_button: "Add barber",
+                edit_barber_button: "Edit barber",
+                barber_list_title: "Barbers",
+                no_barbers: "No barbers",
+                select_month: "Select month",
+                all_months: "All months",
+                total_reservations: "Total reservations",
+                confirmed_reservations: "Confirmed",
+                pending_reservations: "Pending",
+                monthly_stats: "Monthly statistics",
+                cancel: "Cancel",
+                delete_confirm: "Do you really want to delete this barber?",
+                barber_added: "Barber added successfully!",
+                barber_updated: "Barber updated successfully!",
+                barber_removed: "Barber removed!",
+                view_stats: "View statistics",
+                edit: "Edit",
+                delete: "Delete",
+                error: "Error",
+                add_error: "Error adding barber",
+                update_error: "Error updating barber",
+                remove_error: "Error removing barber",
+                stats_title: "Barber statistics",
+                reservations: "reservations",
+                loading_error: "Error loading",
+                uploading: "Uploading...",
+                auth_error_missing: "Authentication error: missing credentials"
+            }
+        };
+
+        let currentLang = localStorage.getItem('lang') || 'fr';
+        let barbers = [];
+        let currentBarber = null;
+
+        // DOM Elements
+        const formTitle = document.getElementById('formTitle');
+        const barberForm = document.getElementById('barberForm');
+        const barberIdInput = document.getElementById('barberId');
+        const barberNameInput = document.getElementById('barberName');
+        const barberEmailInput = document.getElementById('barberEmail');
+        const barberPasswordInput = document.getElementById('barberPassword');
+        const barberRoleInput = document.getElementById('barberRole');
+        const barberImageInput = document.getElementById('barberImage');
+        const submitBtn = document.getElementById('submitBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const barberList = document.getElementById('barberList');
+
+        // Stats Modal Elements
+        const statsModal = document.getElementById('statsModal');
+        const statsTitle = document.getElementById('statsTitle');
+        const statsBarberImg = document.getElementById('statsBarberImg');
+        const statsBarberName = document.getElementById('statsBarberName');
+        const statsBarberRole = document.getElementById('statsBarberRole');
+        const monthFilter = document.getElementById('monthFilter');
+        const totalReservations = document.getElementById('totalReservations');
+        const confirmedReservations = document.getElementById('confirmedReservations');
+        const pendingReservations = document.getElementById('pendingReservations');
+        const monthlyChart = document.getElementById('monthlyChart');
+        const closeStatsBtn = document.getElementById('closeStatsBtn');
+
+        // Snackbar Elements
+        const snackbar = document.getElementById('snackbar');
+        const snackbarIcon = document.getElementById('snackbarIcon');
+        const snackbarMessage = document.getElementById('snackbarMessage');
+        const snackbarClose = document.getElementById('snackbarClose');
+
+        // Snackbar functionality
+        function showSnackbar(message, type = 'info', duration = 4000) {
+            let iconSvg = '';
+            switch (type) {
+                case 'success':
+                    iconSvg = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+                    break;
+                case 'error':
+                    iconSvg = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+                    break;
+                default:
+                    iconSvg = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+            }
+            snackbarIcon.innerHTML = iconSvg;
+            snackbarMessage.textContent = message;
+            snackbar.classList.remove('opacity-0', 'invisible');
+            snackbar.classList.add('opacity-100');
+            setTimeout(() => {
+                snackbar.classList.remove('opacity-100');
+                snackbar.classList.add('opacity-0', 'invisible');
+            }, duration);
+        }
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('lang', lang);
+            document.documentElement.lang = lang;
+            document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                el.textContent = i18n[lang][key];
+            });
+            populateMonthFilter();
+        }
 
         // Firebase Setup
         const firebaseConfig = {
@@ -92,226 +407,536 @@
             appId: "1:863498811120:web:55f7fc647156bc91cdb435"
         };
 
-        let auth = null;
         let db = null;
+        let auth = null;
+        let firebaseReady = false;
 
         if (!MOCK_MODE) {
-            // Import Firebase modules dynamically
-            import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js').then(({ initializeApp }) => {
-            import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js').then(({ getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut }) => {
-                    import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js').then(({ getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy }) => {
-                        const app = initializeApp(firebaseConfig);
-                        auth = getAuth(app);
-                        db = getFirestore(app);
+            Promise.all([
+                import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js'),
+                import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js'),
+                import('https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js'),
+                import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js')
+            ]).then(([
+                { initializeApp },
+                { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, updatePassword, deleteUser },
+                { getStorage, ref, uploadBytes, getDownloadURL },
+                { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, where, orderBy, updateDoc }
+            ]) => {
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
 
-                        // Make Firebase functions globally available
-                        window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
-                        window.signInWithEmailAndPassword = signInWithEmailAndPassword;
-                        window.collection = collection;
-                        window.addDoc = addDoc;
-                        window.getDocs = getDocs;
-                        window.deleteDoc = deleteDoc;
-                        window.doc = doc;
-                        window.query = query;
-                        window.orderBy = orderBy;
+                // Make Firebase functions globally available
+                window.getAuth = getAuth;
+                window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+                window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+                window.collection = collection;
+                window.addDoc = addDoc;
+                window.getDocs = getDocs;
+                window.deleteDoc = deleteDoc;
+                window.doc = doc;
+                window.query = query;
+                window.where = where;
+                window.orderBy = orderBy;
+                window.updateDoc = updateDoc;
+                window.getStorage = getStorage;
+                window.ref = ref;
+                window.uploadBytes = uploadBytes;
+                window.getDownloadURL = getDownloadURL;
 
-                        console.log('Firebase initialized for admin');
-                        loadStaff();
-                    });
-                });
+                firebaseReady = true;
+
+                // Authenticate admin
+                authenticateAdmin();
             });
+        } else {
+            firebaseReady = true;
         }
 
+        async function authenticateAdmin() {
+            try {
+                const adminEmail = localStorage.getItem('adminEmail');
+                const adminPassword = localStorage.getItem('adminPassword');
+
+                if (!adminEmail || !adminPassword) {
+                    console.error('Admin credentials not found in localStorage');
+                    showSnackbar(i18n[currentLang].auth_error_missing, 'error');
+                    return;
+                }
+
+                await window.signInWithEmailAndPassword(auth, adminEmail, adminPassword);
+                console.log('Admin authenticated successfully');
+                loadBarbers();
+            } catch (error) {
+                console.error('Admin authentication failed:', error);
+                showSnackbar('Erreur d\'authentification: ' + error.message, 'error');
+            }
+        }
+
+        // Language Dropdown Logic
+        const langBtn = document.getElementById('langBtn');
+        const currentLangDisplay = document.getElementById('currentLang');
+        const langDropdown = document.getElementById('langDropdown');
+
+        function toggleLangDropdown() {
+            const isVisible = !langDropdown.classList.contains('opacity-0');
+            if (isVisible) {
+                closeLangDropdown();
+            } else {
+                openLangDropdown();
+            }
+        }
+
+        function openLangDropdown() {
+            langDropdown.classList.remove('opacity-0', 'invisible');
+            langBtn.querySelector('svg').style.transform = 'rotate(180deg)';
+        }
+
+        function closeLangDropdown() {
+            langDropdown.classList.add('opacity-0', 'invisible');
+            langBtn.querySelector('svg').style.transform = 'rotate(0deg)';
+        }
+
+        function updateCurrentLangDisplay() {
+            currentLangDisplay.textContent = currentLang.toUpperCase();
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!langBtn.contains(e.target) && !langDropdown.contains(e.target)) {
+                closeLangDropdown();
+            }
+        });
+
         function init() {
+            langBtn.addEventListener('click', toggleLangDropdown);
+            updateCurrentLangDisplay();
+
             document.getElementById('logoutBtn').addEventListener('click', () => {
                 localStorage.removeItem('isLoggedIn');
                 localStorage.removeItem('userRole');
                 window.location.href = 'index.html';
             });
 
-            document.getElementById('addStaffForm').addEventListener('submit', addStaffMember);
+            barberForm.addEventListener('submit', handleBarberSubmit);
+            cancelBtn.addEventListener('click', resetForm);
+            closeStatsBtn.addEventListener('click', closeStatsModal);
+            monthFilter.addEventListener('change', updateStats);
+
+            if (MOCK_MODE) {
+                barbers = [
+                    { id: 1, name: "Ahmed", role: "Coiffeur Principal", img: "https://i.pravatar.cc/300?u=ahmed" },
+                    { id: 2, name: "Mohamed", role: "Barbe Expert", img: "https://i.pravatar.cc/300?u=mohamed" }
+                ];
+                renderBarberList();
+                populateMonthFilter();
+            }
         }
 
-        async function loadStaff() {
+        async function loadBarbers() {
             if (!db) return;
-
             try {
-                const staffQuery = query(collection(db, "staff"), orderBy("name", "asc"));
-                const querySnapshot = await getDocs(staffQuery);
-                const staff = querySnapshot.docs.map(doc => ({
+                const querySnapshot = await window.getDocs(window.query(window.collection(db, "barbers"), window.orderBy("name", "asc")));
+                barbers = querySnapshot.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data()
                 }));
-
-                renderStaffList(staff);
+                renderBarberList();
+                populateMonthFilter();
             } catch (error) {
-                console.error("Error loading staff:", error);
-                renderStaffList([]);
+                console.error("Error loading barbers:", error);
+                renderBarberList();
             }
         }
 
-        function renderStaffList(staff) {
-            const list = document.getElementById('staffList');
-            if (staff.length === 0) {
-                list.innerHTML = `<div class="text-center py-10 opacity-50">Aucun membre du personnel</div>`;
+        function renderBarberList() {
+            if (barbers.length === 0) {
+                barberList.innerHTML = `<div class="text-center py-10 text-light-secondary dark:text-dark-secondary">${i18n[currentLang].no_barbers}</div>`;
                 return;
             }
 
-            list.innerHTML = staff.map(s => `
-                <div class="bg-light-surface dark:bg-dark-surface p-4 rounded-2xl border border-light-border dark:border-dark-border flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <img src="${s.img || 'https://i.pravatar.cc/300?u=' + s.email}" class="w-12 h-12 rounded-xl object-cover" alt="${s.name}">
-                        <div>
-                            <p class="font-bold">${s.name}</p>
-                            <p class="text-sm text-gray-500">${s.email}</p>
-                            <p class="text-xs text-gray-400">${s.role || 'Coiffeur'}</p>
+            barberList.innerHTML = barbers.map(barber => `
+                <div class="bg-light-surface dark:bg-dark-surface p-4 rounded-2xl border border-light-border dark:border-dark-border">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-3">
+                            <img src="${barber.img || 'https://i.pravatar.cc/300?u=' + barber.name}" class="w-12 h-12 rounded-xl object-cover" alt="${barber.name}">
+                            <div>
+                                <p class="font-bold">${barber.name}</p>
+                                <p class="text-sm text-light-secondary dark:text-dark-secondary">${barber.role || 'Coiffeur'}</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="viewBarberStats('${barber.id}')" class="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-colors" title="${i18n[currentLang].view_stats}">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                </svg>
+                            </button>
+                            <button onclick="editBarber('${barber.id}')" class="p-2 text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-xl transition-colors" title="${i18n[currentLang].edit}">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                            </button>
+                            <button onclick="deleteBarber('${barber.id}')" class="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors" title="${i18n[currentLang].delete}">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
                         </div>
                     </div>
-                    <button onclick="removeStaff('${s.id}')" class="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                    </button>
                 </div>
             `).join('');
         }
 
-        async function addStaffMember(e) {
+        async function uploadImage(file) {
+            if (!file) return null;
+
+            // Validate file size (5MB max)
+            if (file.size > 5 * 1024 * 1024) {
+                throw new Error('Image size must be less than 5MB');
+            }
+
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                throw new Error('File must be an image');
+            }
+
+            const storage = window.getStorage();
+            const storageRef = window.ref(storage, `barbers/${Date.now()}_${file.name}`);
+            const snapshot = await window.uploadBytes(storageRef, file);
+            const downloadURL = await window.getDownloadURL(snapshot.ref);
+            return downloadURL;
+        }
+
+        async function handleBarberSubmit(e) {
             e.preventDefault();
 
-            const name = document.getElementById('staffName').value;
-            const email = document.getElementById('staffEmail').value;
-            const password = document.getElementById('staffPassword').value;
-            const img = document.getElementById('staffImage').value;
-            const role = document.getElementById('staffRole').value;
+            if (!firebaseReady && !MOCK_MODE) {
+                showSnackbar('Firebase is still loading, please wait...', 'error');
+                return;
+            }
+
+            const id = barberIdInput.value;
+            const name = barberNameInput.value.trim();
+            const email = barberEmailInput.value.trim();
+            const password = barberPasswordInput.value.trim();
+            const role = barberRoleInput.value.trim();
+            const imageFile = barberImageInput.files[0];
+
+            if (!name || !email || !password) return;
+
+            // Show uploading message
+            submitBtn.disabled = true;
+            submitBtn.textContent = i18n[currentLang].uploading;
+
+            try {
+                let img = null;
+
+                // Upload image if provided
+                if (imageFile) {
+                    img = await uploadImage(imageFile);
+                }
+
+                if (MOCK_MODE) {
+                    if (id) {
+                        // Update
+                        const index = barbers.findIndex(b => b.id == id);
+                        if (index !== -1) {
+                            barbers[index] = { ...barbers[index], name, role, img };
+                            showSnackbar(i18n[currentLang].barber_updated, 'success');
+                        }
+                    } else {
+                        // Add
+                        barbers.push({ id: Date.now(), name, role, img });
+                        showSnackbar(i18n[currentLang].barber_added, 'success');
+                    }
+                    renderBarberList();
+                    resetForm();
+                    return;
+                }
+
+                if (id) {
+                    // Update existing barber
+                    const barber = barbers.find(b => b.id == id);
+                    if (!barber) throw new Error('Barber not found');
+
+                    // Update barbers collection
+                    await window.updateDoc(window.doc(db, "barbers", id), { name, role, img });
+
+                    // Update staff collection if email/password changed
+                    const staffQuery = window.query(window.collection(db, "staff"), window.where("barber_id", "==", barber.id));
+                    const staffSnapshot = await window.getDocs(staffQuery);
+                    if (!staffSnapshot.empty) {
+                        const staffDoc = staffSnapshot.docs[0];
+                        await window.updateDoc(window.doc(db, "staff", staffDoc.id), {
+                            name,
+                            email,
+                            role
+                        });
+                    }
+
+                    showSnackbar(i18n[currentLang].barber_updated, 'success');
+                } else {
+                    // Add new barber
+                    const nextId = barbers.length > 0 ? Math.max(...barbers.map(b => b.id || 0)) + 1 : 1;
+
+                    // Create Firebase Auth user
+                    const userCredential = await window.createUserWithEmailAndPassword(auth, email, password);
+                    const user = userCredential.user;
+
+                    // Add to staff collection
+                    await window.addDoc(window.collection(db, "staff"), {
+                        name,
+                        email,
+                        barber_id: nextId,
+                        role: role || 'Coiffeur',
+                        img: img || `https://i.pravatar.cc/300?u=${email}`,
+                        created_at: new Date().toISOString()
+                    });
+
+                    // Add to barbers collection
+                    await window.addDoc(window.collection(db, "barbers"), { id: nextId, name, role, img });
+
+                    showSnackbar(i18n[currentLang].barber_added, 'success');
+                }
+                await loadBarbers();
+                resetForm();
+            } catch (error) {
+                console.error("Error saving barber:", error);
+                showSnackbar(i18n[currentLang].add_error + ": " + error.message, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = id ? i18n[currentLang].edit_barber_button : i18n[currentLang].add_barber_button;
+            }
+        }
+
+        function editBarber(id) {
+            const barber = barbers.find(b => b.id == id);
+            if (!barber) return;
+
+            barberIdInput.value = barber.id;
+            barberNameInput.value = barber.name;
+            barberEmailInput.value = ''; // Don't populate email for security
+            barberPasswordInput.value = ''; // Don't populate password for security
+            barberRoleInput.value = barber.role || '';
+            barberImageInput.value = barber.img || '';
+
+            formTitle.textContent = i18n[currentLang].edit_barber_title;
+            submitBtn.textContent = i18n[currentLang].edit_barber_button;
+            cancelBtn.classList.remove('hidden');
+        }
+
+        function resetForm() {
+            barberForm.reset();
+            barberIdInput.value = '';
+            formTitle.textContent = i18n[currentLang].add_barber_title;
+            submitBtn.textContent = i18n[currentLang].add_barber_button;
+            cancelBtn.classList.add('hidden');
+        }
+
+        async function deleteBarber(id) {
+            if (!confirm(i18n[currentLang].delete_confirm)) return;
 
             if (MOCK_MODE) {
-                console.log("Mock add staff:", { name, email, role });
-                alert("Membre ajouté (mode mock)");
-                e.target.reset();
+                barbers = barbers.filter(b => b.id != id);
+                renderBarberList();
+                showSnackbar(i18n[currentLang].barber_removed, 'success');
                 return;
             }
 
             try {
-                if (!auth || !db) {
-                    throw new Error("Firebase not initialized");
+                const barber = barbers.find(b => b.id == id);
+                if (!barber) throw new Error('Barber not found');
+
+                // Find and delete from staff collection
+                const staffQuery = window.query(window.collection(db, "staff"), window.where("barber_id", "==", barber.id));
+                const staffSnapshot = await window.getDocs(staffQuery);
+                if (!staffSnapshot.empty) {
+                    const staffDoc = staffSnapshot.docs[0];
+                    // Delete from staff collection
+                    await window.deleteDoc(window.doc(db, "staff", staffDoc.id));
                 }
 
-                // Store current admin credentials to re-authenticate later
-                const adminEmail = localStorage.getItem('adminEmail') || 'admin@barbershop.com';
-                const adminPassword = localStorage.getItem('adminPassword');
-
-                if (!adminPassword) {
-                    throw new Error("Admin password not stored. Please login again.");
+                // Find and delete from barbers collection
+                // We need to find the document with the matching barber ID
+                const barbersQuery = window.query(window.collection(db, "barbers"), window.where("id", "==", barber.id));
+                const barbersSnapshot = await window.getDocs(barbersQuery);
+                if (!barbersSnapshot.empty) {
+                    const barberDoc = barbersSnapshot.docs[0];
+                    await window.deleteDoc(window.doc(db, "barbers", barberDoc.id));
                 }
 
-                // Sign out current admin user (required for creating new users)
-                await auth.signOut();
-
-                // Create Firebase Auth user for the new staff member
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
-
-                // Sign back in as admin
-                await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
-
-                // Get next barber ID by checking existing barbers
-                const barbersSnapshot = await getDocs(collection(db, "barbers"));
-                const existingIds = barbersSnapshot.docs.map(doc => doc.data().id).sort((a, b) => a - b);
-                const nextBarberId = existingIds.length > 0 ? Math.max(...existingIds) + 1 : 1;
-
-                // Add to staff collection
-                const staffData = {
-                    name,
-                    email,
-                    barber_id: nextBarberId,
-                    role: role || 'Coiffeur',
-                    img: img || `https://i.pravatar.cc/300?u=${email}`,
-                    created_at: new Date().toISOString()
-                };
-
-                await addDoc(collection(db, "staff"), staffData);
-
-                // Add to barbers collection for public display
-                const barberData = {
-                    id: nextBarberId,
-                    name,
-                    role: role || 'Coiffeur',
-                    img: img || `https://i.pravatar.cc/300?u=${email}`
-                };
-
-                await addDoc(collection(db, "barbers"), barberData);
-
-                console.log("Staff member added:", user.uid);
-                alert("Membre du personnel ajouté avec succès!");
-
-                // Reset form and reload staff list
-                e.target.reset();
-                await loadStaff();
-
+                await loadBarbers();
+                showSnackbar(i18n[currentLang].barber_removed, 'success');
             } catch (error) {
-                console.error("Error adding staff:", error);
-
-                // Try to sign back in as admin if something went wrong
-                try {
-                    const adminEmail = localStorage.getItem('adminEmail') || 'admin@barbershop.com';
-                    const adminPassword = localStorage.getItem('adminPassword');
-                    if (adminPassword) {
-                        await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
-                    }
-                } catch (reAuthError) {
-                    console.error("Failed to re-authenticate admin:", reAuthError);
-                }
-
-                alert("Erreur lors de l'ajout: " + error.message);
+                console.error("Error deleting barber:", error);
+                showSnackbar(i18n[currentLang].remove_error + ": " + error.message, 'error');
             }
         }
 
-        window.removeStaff = async (staffId) => {
-            if (confirm("Voulez-vous vraiment supprimer ce membre du personnel ?")) {
-                if (MOCK_MODE) {
-                    console.log("Mock remove staff:", staffId);
-                    alert("Membre supprimé (mode mock)");
-                    return;
+        async function viewBarberStats(id) {
+            currentBarber = barbers.find(b => b.id == id);
+            if (!currentBarber) return;
+
+            statsBarberImg.src = currentBarber.img || 'https://i.pravatar.cc/300?u=' + currentBarber.name;
+            statsBarberName.textContent = currentBarber.name;
+            statsBarberRole.textContent = currentBarber.role || 'Coiffeur';
+            statsTitle.textContent = `${i18n[currentLang].stats_title} - ${currentBarber.name}`;
+
+            statsModal.classList.remove('opacity-0', 'pointer-events-none');
+            statsModal.classList.add('opacity-100');
+
+            await updateStats();
+        }
+
+        function closeStatsModal() {
+            statsModal.classList.remove('opacity-100');
+            statsModal.classList.add('opacity-0', 'pointer-events-none');
+            currentBarber = null;
+        }
+
+        async function updateStats() {
+            if (!currentBarber) return;
+
+            const selectedMonth = monthFilter.value;
+
+            if (MOCK_MODE) {
+                // Mock data
+                totalReservations.textContent = '24';
+                confirmedReservations.textContent = '20';
+                pendingReservations.textContent = '4';
+
+                monthlyChart.innerHTML = `
+                    <div class="bg-light-bg dark:bg-dark-bg p-3 rounded-xl">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm font-medium">Janvier 2025</span>
+                            <span class="text-sm font-bold">12 réservations</span>
+                        </div>
+                        <div class="w-full bg-light-border dark:bg-dark-border rounded-full h-2">
+                            <div class="bg-accent-success h-2 rounded-full" style="width: 50%"></div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            try {
+                let appointmentsQuery;
+                if (selectedMonth === 'all') {
+                    appointmentsQuery = window.query(
+                        window.collection(db, "appointments"),
+                        window.where("barber_id", "==", currentBarber.id)
+                    );
+                } else {
+                    const [year, month] = selectedMonth.split('-');
+                    const startDate = `${year}-${month}-01`;
+                    const endDate = new Date(year, month, 0).toISOString().split('T')[0];
+
+                    appointmentsQuery = window.query(
+                        window.collection(db, "appointments"),
+                        window.where("barber_id", "==", currentBarber.id),
+                        window.where("date", ">=", startDate),
+                        window.where("date", "<=", endDate)
+                    );
                 }
 
-                try {
-                    if (!db) {
-                        throw new Error("Firebase not initialized");
-                    }
+                const snapshot = await window.getDocs(appointmentsQuery);
+                const appointments = snapshot.docs.map(doc => doc.data());
 
-                    // Get staff data first to find the barber_id
-                    const staffDoc = await getDocs(query(collection(db, "staff"), where("__name__", "==", staffId)));
-                    if (!staffDoc.empty) {
-                        const staffData = staffDoc.docs[0].data();
-                        const barberId = staffData.barber_id;
+                const total = appointments.length;
+                const confirmed = appointments.filter(a => a.status === 'confirmed').length;
+                const pending = total - confirmed;
 
-                        // Remove from staff collection
-                        await deleteDoc(doc(db, "staff", staffId));
+                totalReservations.textContent = total;
+                confirmedReservations.textContent = confirmed;
+                pendingReservations.textContent = pending;
 
-                        // Also remove from barbers collection
-                        const barbersQuery = query(collection(db, "barbers"), where("id", "==", barberId));
-                        const barbersSnapshot = await getDocs(barbersQuery);
-                        barbersSnapshot.docs.forEach(async (barberDoc) => {
-                            await deleteDoc(doc(db, "barbers", barberDoc.id));
-                        });
+                // Monthly breakdown
+                if (selectedMonth === 'all') {
+                    const monthlyData = {};
+                    appointments.forEach(apt => {
+                        const month = apt.date.substring(0, 7); // YYYY-MM
+                        monthlyData[month] = (monthlyData[month] || 0) + 1;
+                    });
 
-                        console.log("Staff removed:", staffId, "Barber ID:", barberId);
-                        alert("Membre du personnel supprimé!");
-                    }
-
-                    // Reload staff list
-                    await loadStaff();
-
-                } catch (error) {
-                    console.error("Error removing staff:", error);
-                    alert("Erreur lors de la suppression: " + error.message);
+                    monthlyChart.innerHTML = Object.entries(monthlyData)
+                        .sort(([a], [b]) => a.localeCompare(b))
+                        .map(([month, count]) => `
+                            <div class="bg-light-bg dark:bg-dark-bg p-3 rounded-xl">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-sm font-medium">${new Date(month + '-01').toLocaleDateString(currentLang, { year: 'numeric', month: 'long' })}</span>
+                                    <span class="text-sm font-bold">${count} ${i18n[currentLang].reservations}</span>
+                                </div>
+                                <div class="w-full bg-light-border dark:bg-dark-border rounded-full h-2">
+                                    <div class="bg-accent-success h-2 rounded-full" style="width: ${Math.min((count / Math.max(...Object.values(monthlyData))) * 100, 100)}%"></div>
+                                </div>
+                            </div>
+                        `).join('');
+                } else {
+                    monthlyChart.innerHTML = `
+                        <div class="bg-light-bg dark:bg-dark-bg p-3 rounded-xl">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm font-medium">${new Date(selectedMonth + '-01').toLocaleDateString(currentLang, { year: 'numeric', month: 'long' })}</span>
+                                <span class="text-sm font-bold">${total} ${i18n[currentLang].reservations}</span>
+                            </div>
+                            <div class="w-full bg-light-border dark:bg-dark-border rounded-full h-2">
+                                <div class="bg-accent-success h-2 rounded-full" style="width: 100%"></div>
+                            </div>
+                        </div>
+                    `;
                 }
+            } catch (error) {
+                console.error("Error loading stats:", error);
+                totalReservations.textContent = '0';
+                confirmedReservations.textContent = '0';
+                pendingReservations.textContent = '0';
+                monthlyChart.innerHTML = `<div class="text-center py-4 text-light-secondary dark:text-dark-secondary">${i18n[currentLang].loading_error}</div>`;
             }
         }
 
-        // Sync theme
-        if (localStorage.getItem('theme') === 'dark') {
-            document.documentElement.classList.add('dark');
+        function populateMonthFilter() {
+            const months = [];
+            const now = new Date();
+            for (let i = 0; i < 12; i++) {
+                const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const value = date.toISOString().substring(0, 7); // YYYY-MM
+                const label = date.toLocaleDateString(currentLang, { year: 'numeric', month: 'long' });
+                months.push(`<option value="${value}">${label}</option>`);
+            }
+            monthFilter.innerHTML = `<option value="all">${i18n[currentLang].all_months}</option>${months.join('')}`;
         }
+
+        // Make functions globally available
+        window.editBarber = editBarber;
+        window.deleteBarber = deleteBarber;
+        window.viewBarberStats = viewBarberStats;
+        window.setLanguage = setLanguage;
+
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('themeToggle');
+        const sunIcon = document.getElementById('sunIcon');
+        const moonIcon = document.getElementById('moonIcon');
+
+        function setTheme(theme) {
+            localStorage.setItem('theme', theme);
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+                sunIcon.classList.remove('hidden');
+                moonIcon.classList.add('hidden');
+            } else {
+                document.documentElement.classList.remove('dark');
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
+            }
+        }
+
+        function toggleTheme() {
+            const currentTheme = localStorage.getItem('theme') || 'light';
+            setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+        }
+
+        themeToggle.addEventListener('click', toggleTheme);
+        const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        setTheme(savedTheme);
 
         init();
     </script>
