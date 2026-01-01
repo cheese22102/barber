@@ -62,9 +62,9 @@
                     </svg>
                 </button>
                 <div id="langDropdown" class="absolute top-full mt-2 right-0 bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-xl shadow-lg opacity-0 invisible transition-all duration-200 z-50 min-w-[80px]">
-                    <button onclick="setLanguage('fr')" class="w-full px-4 py-2 text-left text-sm font-bold hover:bg-light-bg dark:hover:bg-dark-bg rounded-t-xl transition-colors">FR</button>
-                    <button onclick="setLanguage('ar')" class="w-full px-4 py-2 text-left text-sm font-bold hover:bg-light-bg dark:hover:bg-dark-bg transition-colors">AR</button>
-                    <button onclick="setLanguage('en')" class="w-full px-4 py-2 text-left text-sm font-bold hover:bg-light-bg dark:hover:bg-dark-bg rounded-b-xl transition-colors">EN</button>
+                <button data-lang="fr" class="w-full px-4 py-2 text-left text-sm font-bold hover:bg-light-bg dark:hover:bg-dark-bg rounded-t-xl transition-colors">FR</button>
+                <button data-lang="ar" class="w-full px-4 py-2 text-left text-sm font-bold hover:bg-light-bg dark:hover:bg-dark-bg transition-colors">AR</button>
+                <button data-lang="en" class="w-full px-4 py-2 text-left text-sm font-bold hover:bg-light-bg dark:hover:bg-dark-bg rounded-b-xl transition-colors">EN</button>
                 </div>
             </div>
             <button id="themeToggle" class="p-2 rounded-xl bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border transition-all hover:scale-105 active:scale-95">
@@ -90,10 +90,16 @@
 
         <!-- Upcoming Reservations -->
         <section>
-            <h3 class="font-bold mb-4 flex items-center justify-between">
-                <span data-i18n="upcoming_reservations">Réservations à venir</span>
-                <span class="text-xs bg-accent-success text-white px-2 py-1 rounded" data-i18n="today">Upcoming</span>
-            </h3>
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold" data-i18n="upcoming_reservations">Réservations à venir</h3>
+                <div class="flex items-center gap-3">
+                    <select id="monthFilter" class="px-3 py-2 rounded-xl bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border outline-none focus:ring-2 focus:ring-accent-selected text-sm">
+                        <option value="all" data-i18n="all_months">Tous les mois</option>
+                        <!-- Months will be populated by JS -->
+                    </select>
+                    <span class="text-xs bg-accent-success text-white px-2 py-1 rounded" data-i18n="today">Aujourd'hui</span>
+                </div>
+            </div>
             <div id="bookingList" class="space-y-3">
                 <!-- Bookings injected here -->
             </div>
@@ -147,7 +153,16 @@
                 delete_confirm: "Voulez-vous vraiment annuler ce rendez-vous ?",
                 booking_cancelled: "Rendez-vous annulé!",
                 error: "Erreur",
-                cancel_error: "Erreur lors de l'annulation"
+                cancel_error: "Erreur lors de l'annulation",
+                loading_error: "Erreur lors du chargement",
+                network_error: "Problème de connexion réseau",
+                barber: "Barbier",
+                unknown: "Inconnu",
+                select_month: "Sélectionner un mois",
+                all_months: "Tous les mois",
+                filter_by_month: "Filtrer par mois",
+                total_bookings: "Total des réservations",
+                this_month: "Ce mois-ci"
             },
             ar: {
                 staff_title: "لوحة الموظف",
@@ -161,7 +176,16 @@
                 delete_confirm: "هل تريد حقاً إلغاء هذا الموعد؟",
                 booking_cancelled: "تم إلغاء الموعد!",
                 error: "خطأ",
-                cancel_error: "خطأ في الإلغاء"
+                cancel_error: "خطأ في الإلغاء",
+                loading_error: "خطأ في التحميل",
+                network_error: "مشكلة في الاتصال بالشبكة",
+                barber: "الحلاق",
+                unknown: "غير معروف",
+                select_month: "اختر الشهر",
+                all_months: "جميع الأشهر",
+                filter_by_month: "تصفية حسب الشهر",
+                total_bookings: "إجمالي الحجوزات",
+                this_month: "هذا الشهر"
             },
             en: {
                 staff_title: "Staff Panel",
@@ -175,7 +199,16 @@
                 delete_confirm: "Do you really want to cancel this appointment?",
                 booking_cancelled: "Appointment cancelled!",
                 error: "Error",
-                cancel_error: "Error cancelling appointment"
+                cancel_error: "Error cancelling appointment",
+                loading_error: "Error loading data",
+                network_error: "Network connection problem",
+                barber: "Barber",
+                unknown: "Unknown",
+                select_month: "Select month",
+                all_months: "All months",
+                filter_by_month: "Filter by month",
+                total_bookings: "Total bookings",
+                this_month: "This month"
             }
         };
 
@@ -313,8 +346,22 @@
             langBtn.addEventListener('click', toggleLangDropdown);
             updateCurrentLangDisplay();
 
+            // Language button event listeners
+            document.querySelectorAll('[data-lang]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const lang = btn.getAttribute('data-lang');
+                    setLanguage(lang);
+                });
+            });
+
             const staffName = localStorage.getItem('staffName');
-            document.getElementById('barberName').textContent = `Barbier: ${staffName || 'Inconnu'}`;
+            document.getElementById('barberName').textContent = `${i18n[currentLang].barber}: ${staffName || i18n[currentLang].unknown}`;
+
+            // Month filter setup
+            populateMonthFilter();
+            document.getElementById('monthFilter').addEventListener('change', (e) => {
+                filterBookingsByMonth(e.target.value);
+            });
 
             if (MOCK_MODE) {
                 renderBookings(mockBookings);
@@ -503,6 +550,65 @@
         }
 
         themeToggle.addEventListener('click', toggleTheme);
+
+        // Month filter functionality
+        function populateMonthFilter() {
+            const monthFilter = document.getElementById('monthFilter');
+            const months = [];
+
+            // Add current month and next 11 months
+            const now = new Date();
+            for (let i = 0; i < 12; i++) {
+                const date = new Date(now.getFullYear(), now.getMonth() + i, 1);
+                const value = date.toISOString().substring(0, 7); // YYYY-MM
+                const label = date.toLocaleDateString(currentLang, { year: 'numeric', month: 'long' });
+                months.push(`<option value="${value}">${label}</option>`);
+            }
+
+            monthFilter.innerHTML = `<option value="all">${i18n[currentLang].all_months}</option>${months.join('')}`;
+        }
+
+        function filterBookingsByMonth(selectedMonth) {
+            if (!db) {
+                showSnackbar(i18n[currentLang].network_error, 'error');
+                return;
+            }
+
+            try {
+                if (selectedMonth === 'all') {
+                    // Show all upcoming bookings
+                    loadBookings();
+                } else {
+                    // Filter by specific month
+                    const [year, month] = selectedMonth.split('-');
+                    const startDate = `${year}-${month}-01`;
+                    const endDate = new Date(year, month, 0).toISOString().split('T')[0];
+
+                    const q = query(
+                        collection(db, "appointments"),
+                        where("barber_id", "==", parseInt(barberId)),
+                        where("date", ">=", startDate),
+                        where("date", "<=", endDate),
+                        orderBy("date", "asc"),
+                        orderBy("time", "asc")
+                    );
+
+                    getDocs(q).then(querySnapshot => {
+                        const bookings = querySnapshot.docs.map(doc => ({
+                            id: doc.id,
+                            ...doc.data()
+                        }));
+                        renderBookings(bookings);
+                    }).catch(error => {
+                        console.error("Error filtering bookings:", error);
+                        showSnackbar(i18n[currentLang].loading_error, 'error');
+                    });
+                }
+            } catch (error) {
+                console.error("Error in month filter:", error);
+                showSnackbar(i18n[currentLang].error, 'error');
+            }
+        }
 
         // Sync theme
         const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
