@@ -53,9 +53,9 @@
                 </svg>
             </button>
             <div id="langDropdown" class="absolute top-full mt-2 right-0 bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-xl shadow-lg opacity-0 invisible transition-all duration-200 z-50 min-w-[80px]">
-                <button onclick="setLanguage('fr')" class="w-full px-4 py-2 text-left text-sm font-bold hover:bg-light-bg dark:hover:bg-dark-bg rounded-t-xl transition-colors">FR</button>
-                <button onclick="setLanguage('ar')" class="w-full px-4 py-2 text-left text-sm font-bold hover:bg-light-bg dark:hover:bg-dark-bg transition-colors">AR</button>
-                <button onclick="setLanguage('en')" class="w-full px-4 py-2 text-left text-sm font-bold hover:bg-light-bg dark:hover:bg-dark-bg rounded-b-xl transition-colors">EN</button>
+                <button data-lang="fr" class="w-full px-4 py-2 text-left text-sm font-bold hover:bg-light-bg dark:hover:bg-dark-bg rounded-t-xl transition-colors">FR</button>
+                <button data-lang="ar" class="w-full px-4 py-2 text-left text-sm font-bold hover:bg-light-bg dark:hover:bg-dark-bg transition-colors">AR</button>
+                <button data-lang="en" class="w-full px-4 py-2 text-left text-sm font-bold hover:bg-light-bg dark:hover:bg-dark-bg rounded-b-xl transition-colors">EN</button>
             </div>
         </div>
         <button id="themeToggle" class="p-3 rounded-xl bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border transition-all hover:scale-105 active:scale-95 shadow-lg">
@@ -83,9 +83,15 @@
                 <label class="block text-sm font-medium mb-1" data-i18n="email_label">Email</label>
                 <input type="email" id="email" required class="w-full p-4 rounded-xl bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border outline-none focus:ring-2 focus:ring-accent-selected text-base">
             </div>
-            <div>
+            <div class="relative">
                 <label class="block text-sm font-medium mb-1" data-i18n="password_label">Mot de passe</label>
-                <input type="password" id="password" required class="w-full p-4 rounded-xl bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border outline-none focus:ring-2 focus:ring-accent-selected text-base">
+                <input type="password" id="password" required class="w-full p-4 pr-12 rounded-xl bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border outline-none focus:ring-2 focus:ring-accent-selected text-base">
+                <button type="button" id="passwordToggle" class="absolute right-3 top-10 text-light-secondary dark:text-dark-secondary hover:text-light-text dark:hover:text-dark-text transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                    </svg>
+                </button>
             </div>
             <button type="submit" class="w-full bg-accent-selected dark:bg-light-surface text-light-surface dark:text-dark-text font-bold py-4 rounded-xl hover:opacity-90 transition-all" data-i18n="login_button">
                 Se connecter
@@ -131,6 +137,12 @@
                 login_success: "Connexion réussie",
                 invalid_credentials: "Identifiants invalides",
                 access_denied: "Accès refusé",
+                invalid_email: "Email invalide",
+                account_disabled: "Compte désactivé",
+                too_many_attempts: "Trop de tentatives, réessayez plus tard",
+                network_error: "Problème de connexion réseau",
+                account_not_found: "Aucun compte trouvé avec cet email",
+                service_unavailable: "Service temporairement indisponible",
                 staff_added: "Membre ajouté avec succès",
                 staff_removed: "Membre supprimé avec succès"
             },
@@ -147,6 +159,12 @@
                 login_success: "تم تسجيل الدخول بنجاح",
                 invalid_credentials: "بيانات الدخول غير صحيحة",
                 access_denied: "تم رفض الوصول",
+                invalid_email: "البريد الإلكتروني غير صالح",
+                account_disabled: "الحساب معطل",
+                too_many_attempts: "محاولات كثيرة جداً، حاول مرة أخرى لاحقاً",
+                network_error: "مشكلة في الاتصال بالشبكة",
+                account_not_found: "لم يتم العثور على حساب بهذا البريد الإلكتروني",
+                service_unavailable: "الخدمة غير متوفرة مؤقتاً",
                 staff_added: "تم إضافة العضو بنجاح",
                 staff_removed: "تم حذف العضو بنجاح"
             },
@@ -163,6 +181,12 @@
                 login_success: "Login successful",
                 invalid_credentials: "Invalid credentials",
                 access_denied: "Access denied",
+                invalid_email: "Invalid email",
+                account_disabled: "Account disabled",
+                too_many_attempts: "Too many attempts, try again later",
+                network_error: "Network connection problem",
+                account_not_found: "No account found with this email",
+                service_unavailable: "Service temporarily unavailable",
                 staff_added: "Member added successfully",
                 staff_removed: "Member removed successfully"
             }
@@ -382,7 +406,47 @@
                     }
                 } catch (error) {
                     console.error("Login error:", error);
-                    showSnackbar(i18n[currentLang].login_error + ": " + error.message, 'error');
+
+                    // Handle different error types
+                    let errorMessage = i18n[currentLang].login_error;
+
+                    if (error.code) {
+                        switch (error.code) {
+                            case 'auth/user-not-found':
+                                errorMessage = i18n[currentLang].invalid_credentials;
+                                break;
+                            case 'auth/wrong-password':
+                                errorMessage = i18n[currentLang].invalid_credentials;
+                                break;
+                            case 'auth/invalid-email':
+                                errorMessage = i18n[currentLang].invalid_email;
+                                break;
+                            case 'auth/user-disabled':
+                                errorMessage = i18n[currentLang].account_disabled;
+                                break;
+                            case 'auth/too-many-requests':
+                                errorMessage = i18n[currentLang].too_many_attempts;
+                                break;
+                            case 'auth/network-request-failed':
+                                errorMessage = i18n[currentLang].network_error;
+                                break;
+                            default:
+                                errorMessage = error.message || i18n[currentLang].login_error;
+                        }
+                    } else {
+                        // Custom error messages
+                        if (error.message.includes("Accès administrateur refusé")) {
+                            errorMessage = i18n[currentLang].access_denied;
+                        } else if (error.message.includes("Compte personnel introuvable")) {
+                            errorMessage = i18n[currentLang].account_not_found;
+                        } else if (error.message.includes("Firebase not initialized")) {
+                            errorMessage = i18n[currentLang].service_unavailable;
+                        } else {
+                            errorMessage = error.message || i18n[currentLang].login_error;
+                        }
+                    }
+
+                    showSnackbar(errorMessage, 'error');
                 }
             }
         });
@@ -412,9 +476,36 @@
 
         themeToggle.addEventListener('click', toggleTheme);
 
+        // Password visibility toggle
+        const passwordToggle = document.getElementById('passwordToggle');
+        const passwordInput = document.getElementById('password');
+
+        passwordToggle.addEventListener('click', () => {
+            const isPassword = passwordInput.type === 'password';
+            passwordInput.type = isPassword ? 'text' : 'password';
+
+            // Update icon
+            passwordToggle.innerHTML = isPassword
+                ? `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"></path>
+                   </svg>`
+                : `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                   </svg>`;
+        });
+
         // Language dropdown setup
         langBtn.addEventListener('click', toggleLangDropdown);
         updateCurrentLangDisplay();
+
+        // Language button event listeners
+        document.querySelectorAll('[data-lang]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const lang = btn.getAttribute('data-lang');
+                setLanguage(lang);
+            });
+        });
 
         // Sync theme with main page
         const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
